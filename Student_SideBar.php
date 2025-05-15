@@ -62,6 +62,8 @@ if (!isset($_SESSION['username'])) {
   <div class="main-content">
     <div style="padding: 20px;">
       <h2>Dashboard Content Here</h2>
+
+      <h1>sadfhsafskljfajfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff</h1>
       <p>This is where your dashboard content will go.</p>
     </div>
   </div>
