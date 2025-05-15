@@ -1,19 +1,34 @@
 body {
   margin: 0;
   padding: 0;
-  background: #f0f2f5;
+  background: url('fkweb-welcometofkumpsa_.png') no-repeat center center fixed;
+  background-size: cover;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
+  position: relative;
+  z-index: 0;
 }
 
+/* Add dark overlay */
+body::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.2); /* adjust transparency here */
+  z-index: 0;
+}
+
+/* Make sure login box appears above the overlay */
 .login-wrapper {
-  background-color: #ffffff;
+  position: relative;
+  z-index: 1;
+  background-color: #ffffffee; /* slightly see-through white */
   padding: 40px 30px;
   border-radius: 10px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   width: 360px;
   text-align: center;
 }
@@ -76,37 +91,4 @@ button:hover {
 .form-footer a:hover {
   text-decoration: underline;
 }
-body {
-  margin: 0;
-  padding: 0;
-  background: url('fkweb-welcometofkumpsa_.png') no-repeat center center fixed;
-  background-size: cover;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  position: relative;
-  z-index: 0;
-}
 
-/* Add dark overlay */
-body::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.2); /* adjust transparency here */
-  z-index: 0;
-}
-
-/* Make sure login box appears above the overlay */
-.login-wrapper {
-  position: relative;
-  z-index: 1;
-  background-color: #ffffffee; /* slightly see-through white */
-  padding: 40px 30px;
-  border-radius: 10px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  width: 360px;
-  text-align: center;
-}
