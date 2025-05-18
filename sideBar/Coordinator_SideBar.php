@@ -16,7 +16,6 @@ session_start();
 
 <style>
 
-  
     * {
     margin: 0;
     padding: 0;
@@ -29,6 +28,8 @@ body {
     display: flex;
     height: 100vh;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+
 }
 
 .h11 {
@@ -95,12 +96,15 @@ body {
     text-align: center;
 }
 
-.nav-item span {
-    font-size: 14px;
+.nav-item a {
+    text-decoration: none;
+    color: #cfd4e0; /* same as 'Forms' icon/text color */
 }
 
-.nav-item .arrow {
-    margin-left: auto;
+/* Active link (highlighted) */
+.nav-item a.active {
+    color: #a259ff; /* purple color for active state */
+    font-weight: 600;
 }
 
 .nav-divider {
@@ -119,7 +123,11 @@ body {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    padding-top: 70px; /* This matches the height of the fixed top bar */
+    padding-left: 10px;
+    padding-right: 10px;
 }
+
 
 /* Top bar styles */
 .top-bar {
@@ -218,8 +226,7 @@ h2 {
     margin-bottom: 20px;
     color: #333;
 }
-
-</style>
+  </style>
 
 </head>
 <body>
@@ -254,12 +261,10 @@ h2 {
     </div>
   </div>
 
-  <!-- Optional Main Content -->
+  <!-- Main Content -->
   <div class="main-content">
-    <div style="padding: 20px;">
-      <h2>Dashboard Content Here</h2>
-      <p>This is where your dashboard content will go.</p>
-    </div>
+        <?php echo $content ?? '<h2>Welcome to the dashboard.</h2>'; ?>
+
   </div>
 
   <!-- JS -->

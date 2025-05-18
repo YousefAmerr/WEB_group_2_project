@@ -27,6 +27,8 @@ body {
     display: flex;
     height: 100vh;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+
 }
 
 .h11 {
@@ -120,7 +122,11 @@ body {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    padding-top: 70px; /* This matches the height of the fixed top bar */
+    padding-left: 10px;
+    padding-right: 10px;
 }
+
 
 /* Top bar styles */
 .top-bar {
@@ -231,7 +237,9 @@ h2 {
       <h1 class="h11" style="text-align:center; padding:20px;">MyPetakom</h1>
     </div>
     <div class="sidebar-nav">
-      <div class="nav-item active"><i class="material-icons">dashboard</i><span>Dashboard</span></div>
+
+      <div class="nav-item"><i class="material-icons">dashboard</i><a href="../module4/dashboard.php" >Dashboard</a></div>
+
       <div class="nav-divider">COMPONENTS</div>
       <!-- option 1 -->
       <div class="nav-item"><i class="material-icons">assignment</i><a href="../module4/meritAwardedList.php" >Forms</a></div>
@@ -258,14 +266,10 @@ h2 {
     </div>
   </div>
 
-  <!-- Optional Main Content -->
+  <!-- Main Content -->
   <div class="main-content">
-    <div style="padding: 20px;">
-      <h2>Dashboard Content Here</h2>
+        <?php echo $content ?? '<h2>Welcome to the dashboard.</h2>'; ?>
 
-      <h1>you</h1>
-      <p>This is where your dashboard content will go.</p>
-    </div>
   </div>
 
   <!-- JS -->
