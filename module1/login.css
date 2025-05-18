@@ -1,0 +1,94 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: url('fkweb-welcometofkumpsa_.png') no-repeat center center fixed;
+  background-size: cover;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  position: relative;
+  z-index: 0;
+}
+
+/* Add dark overlay */
+body::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.2); /* adjust transparency here */
+  z-index: 0;
+}
+
+/* Make sure login box appears above the overlay */
+.login-wrapper {
+  position: relative;
+  z-index: 1;
+  background-color: #ffffffee; /* slightly see-through white */
+  padding: 40px 30px;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 360px;
+  text-align: center;
+}
+
+.login-wrapper h2 {
+  margin-bottom: 10px;
+  font-size: 24px;
+  color: #002147; /* university dark blue tone */
+}
+
+.login-wrapper p {
+  margin-bottom: 30px;
+  font-size: 14px;
+  color: #666;
+}
+
+input[type="text"],
+input[type="email"] {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background-color: #002147;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #004080;
+}
+
+.error-message {
+  color: red;
+  font-size: 13px;
+  margin-bottom: 15px;
+}
+
+.form-footer {
+  margin-top: 20px;
+  font-size: 13px;
+}
+
+.form-footer a {
+  color: #004080;
+  text-decoration: none;
+}
+
+.form-footer a:hover {
+  text-decoration: underline;
+}
+
