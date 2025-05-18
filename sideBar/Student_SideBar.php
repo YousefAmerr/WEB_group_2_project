@@ -103,12 +103,15 @@ body {
     text-align: center;
 }
 
-.nav-item span {
-    font-size: 14px;
+.nav-item a {
+    text-decoration: none;
+    color: #cfd4e0; /* same as 'Forms' icon/text color */
 }
 
-.nav-item .arrow {
-    margin-left: auto;
+/* Active link (highlighted) */
+.nav-item a.active {
+    color: #a259ff; /* purple color for active state */
+    font-weight: 600;
 }
 
 .nav-divider {
@@ -240,11 +243,14 @@ h2 {
     <div class="sidebar-nav">
       <div class="nav-item active"><i class="material-icons">dashboard</i><span>Dashboard</span></div>
       <div class="nav-divider">COMPONENTS</div>
-      <div class="nav-item"><i class="material-icons">list</i><span>Merit List</span></div>
-      <div class="nav-item"><i class="material-icons">view_sidebar</i><span>Sidebar Layouts</span></div>
-      <div class="nav-item"><i class="material-icons">assignment</i><span>Forms</span></div>
-      <div class="nav-item"><i class="material-icons">table_chart</i><span>Tables</span></div>
-      <div class="nav-item"><i class="material-icons">map</i><span>Maps</span></div>
+      <!-- option 1 -->
+      <div class="nav-item"><i class="material-icons">assignment</i><a href="../module4/meritAwardedList.php" >Forms</a></div>
+
+      <!-- option 2 -->
+      <div class="nav-item"><i class="material-icons">list</i><a href="../module4/meritAwardedList.php" >Merit Awarded List</a></div>
+      
+      <!-- option 3 -->
+       
     </div>
   </div>
 
