@@ -1,0 +1,142 @@
+.border {
+    border: 3px solid black;
+    padding: 20px;
+    margin: 80px;
+    margin-bottom: 0px;
+    margin-top: 0px;
+  }
+  
+  .page_title {
+    font-size: 30px;
+    font-weight: bold;
+    color: #000;
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 20px;
+  }
+
+  .border_filter {
+    border: 2px solid black;
+    padding: 8px;
+    display: inline-block;
+    margin-right: 70px;
+    float: right;
+    margin-top: 30px;
+  }
+
+  .event-list {
+    display: flex;
+    flex-direction: column;
+    gap: 30px; 
+    margin-top: 90px;
+  }
+
+  .sections_border {
+    border: 2px solid gray;
+    padding: 20px;
+  }
+
+  .sections_border_space {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .summary-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px;
+    margin: 90px;
+    margin-top: 40px;
+  }
+
+  .summary-left {
+    width: 37%;
+  }
+  
+  .summary-right {
+    width: 40%;
+  }
+
+  .merit_summary_box {
+    border: 1px solid black;
+    padding: 10px;
+    margin-top: 10px;
+  }
+
+  .qr_box {
+    border: 1px solid black;
+    width: 400px;
+    height: 300px;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .no-events {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.event-details {
+    margin: 10px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.event-details p {
+    margin: 5px 0;
+}
+
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+/* Add these styles to your meritAwardedList.css file */
+
+.qr_box {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  border: 2px dashed #dee2e6;
+  transition: all 0.3s ease;
+}
+
+.qr_box:hover {
+  border-color: #7367f0;
+  background: #f5f3ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(115, 103, 240, 0.15);
+}
+
+.qr_box img {
+  transition: transform 0.3s ease;
+}
+
+.qr_box:hover img {
+  transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+  .summary-container {
+    flex-direction: column;
+  }
+  
+  .qr_box img {
+    max-width: 150px !important;
+    max-height: 150px !important;
+  }
+}
