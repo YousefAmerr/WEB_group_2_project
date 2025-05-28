@@ -4,13 +4,10 @@ session_start();
 include '../db_connect.php';
 include '../sideBar/Advisor_SideBar.php';
 
-
 // Simple authentication check
 if (!isset($_SESSION['logged_in'])) {
     $_SESSION['logged_in'] = true; // For demo purposes
 }
-
-
 
 // Sample event data (in real application, this would come from database)
 $events = [
@@ -123,330 +120,61 @@ if ($_POST) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyPetakom - Event Management</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-        }
-
-        /* Header Styles */
-        .header {
-            background-color: #2c5aa0;
-            color: white;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header h1 {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        /* Main Container */
-        .container {
-            min-height: calc(100vh - 70px);
-        }
-
-        /* Content Area */
-        .content {
-            padding: 30px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .content-header {
-            margin: 90px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .content h2 {
-            font-size: 28px;
-            color: #333;
-        }
-
-        .add-btn {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .add-btn:hover {
-            background-color: #218838;
-        }
-
-        /* Event Card Styles */
-        .event-card {
-            
-            background-color: #e3f2fd;
-            border: 1px solid #bbdefb;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            margin-left: 30px;
-        }
-
-        .event-field {
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        .event-field strong {
-            font-weight: bold;
-            color: #333;
-        }
-
-        .approval-link {
-            color: #007bff;
-            text-decoration: underline;
-            cursor: pointer;
-        }
-
-        .approval-link:hover {
-            color: #0056b3;
-        }
-
-        /* Action Buttons */
-        .action-buttons {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-        }
-
-        .btn-primary {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-
-        .btn-danger {
-            background-color: #dc3545;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background-color: #c82333;
-        }
-
-        .btn-info {
-            background-color: #17a2b8;
-            color: white;
-        }
-
-        .btn-info:hover {
-            background-color: #138496;
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background-color: #545b62;
-        }
-
-        .btn-success {
-            background-color: #28a745;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background-color: #218838;
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-        }
-
-        .modal-content {
-            background-color: white;
-            margin: 5% auto;
-            padding: 30px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close:hover {
-            color: black;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #007bff;
-        }
-
-        .form-group textarea {
-            height: 120px;
-            resize: vertical;
-        }
-
-        .form-group input[type="file"] {
-            padding: 8px;
-            background-color: #f8f9fa;
-        }
-
-        .form-group input[type="datetime-local"] {
-            padding: 10px;
-        }
-
-        .btn-submit {
-            background-color: #1e4a72;
-            color: white;
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .btn-submit:hover {
-            background-color: #163a5f;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .content {
-                padding: 15px;
-            }
-            
-            .action-buttons {
-                flex-direction: column;
-            }
-            
-            .btn {
-                width: 100%;
-                margin-bottom: 5px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="manageEvent.css">
 </head>
 <body>
 
     <!-- Main Container -->
     <div class="container">
             
-            <div class="content-header">
-                <h2>Manage Events</h2>
-                <button class="add-btn" onclick="openAddEventModal()">+ Add Event</button>
+        <div class="content-header">
+            <h2>Manage Events</h2>
+            <button class="add-btn" onclick="openAddEventModal()">+ Add Event</button>
+        </div>
+
+        <!-- Event Cards -->
+        <?php foreach ($events as $event): ?>
+        <div class="event-card">
+            <div class="event-field">
+                <strong>Event Name:</strong> <?php echo htmlspecialchars($event['name']); ?>
+            </div>
+            <div class="event-field">
+                <strong>Location:</strong> <?php echo htmlspecialchars($event['location']); ?>
+            </div>
+            <div class="event-field">
+                <strong>Date:</strong> <?php echo htmlspecialchars($event['date']); ?>
+            </div>
+            <div class="event-field">
+                <strong>Status:</strong> <?php echo htmlspecialchars($event['status']); ?>
+            </div>
+            <div class="event-field">
+                <strong>Geo:</strong> <?php echo htmlspecialchars($event['geo']); ?>
+            </div>
+            <div class="event-field">
+                <strong>Description:</strong><br>
+                <?php echo htmlspecialchars($event['description'] ?: 'No description provided'); ?>
+            </div>
+            <div class="event-field">
+                <strong>Approval Letter:</strong> 
+                <span class="approval-link" onclick="viewApprovalLetter(<?php echo $event['id']; ?>)">
+                    <?php echo htmlspecialchars($event['approval_letter']); ?>
+                </span>
             </div>
 
-            <!-- Event Cards -->
-            <?php foreach ($events as $event): ?>
-            <div class="event-card">
-                <div class="event-field">
-                    <strong>Event Name:</strong> <?php echo htmlspecialchars($event['name']); ?>
-                </div>
-                <div class="event-field">
-                    <strong>Location:</strong> <?php echo htmlspecialchars($event['location']); ?>
-                </div>
-                <div class="event-field">
-                    <strong>Date:</strong> <?php echo htmlspecialchars($event['date']); ?>
-                </div>
-                <div class="event-field">
-                    <strong>Status:</strong> <?php echo htmlspecialchars($event['status']); ?>
-                </div>
-                <div class="event-field">
-                    <strong>Geo:</strong> <?php echo htmlspecialchars($event['geo']); ?>
-                </div>
-                <div class="event-field">
-                    <strong>Description:</strong><br>
-                    <?php echo htmlspecialchars($event['description'] ?: 'No description provided'); ?>
-                </div>
-                <div class="event-field">
-                    <strong>Approval Letter:</strong> 
-                    <span class="approval-link" onclick="viewApprovalLetter(<?php echo $event['id']; ?>)">
-                        <?php echo htmlspecialchars($event['approval_letter']); ?>
-                    </span>
-                </div>
-
-                <div class="action-buttons">
-                    <button class="btn btn-primary" onclick="updateEvent(<?php echo $event['id']; ?>)">Update Event</button>
-                    <button class="btn btn-danger" onclick="deleteEvent(<?php echo $event['id']; ?>, '<?php echo htmlspecialchars($event['name']); ?>')">Delete Event</button>
-                    <button class="btn btn-info" onclick="assignCommittees(<?php echo $event['id']; ?>)">Assign Committees</button>
-                    <button class="btn btn-secondary" onclick="generateQRCode(<?php echo $event['id']; ?>, '<?php echo htmlspecialchars($event['name']); ?>')">Generate QR Code</button>
-                    <button class="btn btn-success" onclick="applyMerit(<?php echo $event['id']; ?>, '<?php echo htmlspecialchars($event['name']); ?>')">Apply Merit</button>
-                </div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="updateEvent(<?php echo $event['id']; ?>)">Update Event</button>
+                <button class="btn btn-danger" onclick="deleteEvent(<?php echo $event['id']; ?>, '<?php echo htmlspecialchars($event['name']); ?>')">Delete Event</button>
+                <button class="btn btn-info" onclick="assignCommittees(<?php echo $event['id']; ?>)">Assign Committees</button>
+                <button class="btn btn-secondary" onclick="generateQRCode(<?php echo $event['id']; ?>, '<?php echo htmlspecialchars($event['name']); ?>')">Generate QR Code</button>
+                <button class="btn btn-success" onclick="applyMerit(<?php echo $event['id']; ?>, '<?php echo htmlspecialchars($event['name']); ?>')">Apply Merit</button>
             </div>
-            <?php endforeach; ?>
+        </div>
+        <?php endforeach; ?>
 
         <!-- Content Area -->
         <div class="content">
             <?php if (isset($success_message)): ?>
-                <div style="background-color: #d4edda; color: #155724; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #c3e6cb;">
+                <div class="success-message">
                     <?php echo htmlspecialchars($success_message); ?>
                 </div>
             <?php endif; ?>
@@ -703,7 +431,6 @@ if ($_POST) {
         function downloadQRCode() {
             alert('QR Code download functionality - In real application, this would generate and download a QR code image');
         }
-
 
         // Close modal when clicking outside of it
         window.onclick = function(event) {
