@@ -1,6 +1,8 @@
 <?php
 session_start();
+
 include '../db_connect.php';
+include '../sideBar/Advisor_SideBar.php';
 
 
 // Simple authentication check
@@ -8,26 +10,28 @@ if (!isset($_SESSION['logged_in'])) {
     $_SESSION['logged_in'] = true; // For demo purposes
 }
 
+
+
 // Sample event data (in real application, this would come from database)
 $events = [
     [
-        'id' => 1,
-        'name' => 'kkkk',
-        'location' => 'K',
-        'date' => '2025-05-24',
-        'status' => 'pending',
-        'geo' => 'sami',
-        'description' => '',
+        'id' => 25_001,
+        'name' => 'The COMBAT 2025',
+        'location' => 'UMPSA Pekan',
+        'date' => '2025-05-09',
+        'status' => 'Completed',
+        'geo' => '26600 Pekan Pahang, Malaysia',
+        'description' => 'Event Successful!',
         'approval_letter' => 'View'
     ]
 ];
 
 // Sample student data for committee assignment
 $students = [
-    ['id' => 1, 'name' => 'aziz'],
-    ['id' => 2, 'name' => 'Ahmad Ali'],
-    ['id' => 3, 'name' => 'Siti Fatimah'],
-    ['id' => 4, 'name' => 'Muhammad Hassan']
+    ['id' => 22007, 'name' => 'Ali bin Abu'],
+    ['id' => 23135, 'name' => 'Kamsiah binti Jusoh'],
+    ['id' => 24059, 'name' => 'Adam bin Samsul Badri'],
+    ['id' => 21099, 'name' => 'Mardhiah binti Syafiq Kyle']
 ];
 
 // Committee roles
@@ -44,7 +48,8 @@ $event_levels = [
     'International',
     'National',
     'State',
-    'District'
+    'District',
+    'UMPSA'
 ];
 
 // Handle form submissions
@@ -145,20 +150,6 @@ if ($_POST) {
             font-weight: bold;
         }
 
-        .logout-btn {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .logout-btn:hover {
-            background-color: #c82333;
-        }
-
         /* Main Container */
         .container {
             min-height: calc(100vh - 70px);
@@ -172,6 +163,7 @@ if ($_POST) {
         }
 
         .content-header {
+            margin: 90px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -201,11 +193,13 @@ if ($_POST) {
 
         /* Event Card Styles */
         .event-card {
+            
             background-color: #e3f2fd;
             border: 1px solid #bbdefb;
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
+            margin-left: 30px;
         }
 
         .event-field {
@@ -401,21 +395,9 @@ if ($_POST) {
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <h1>MyPetakom</h1>
-        <button class="logout-btn" onclick="logout()">Logout</button>
-    </div>
 
     <!-- Main Container -->
     <div class="container">
-        <!-- Content Area -->
-        <div class="content">
-            <?php if (isset($success_message)): ?>
-                <div style="background-color: #d4edda; color: #155724; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #c3e6cb;">
-                    <?php echo htmlspecialchars($success_message); ?>
-                </div>
-            <?php endif; ?>
             
             <div class="content-header">
                 <h2>Manage Events</h2>
@@ -460,7 +442,16 @@ if ($_POST) {
                 </div>
             </div>
             <?php endforeach; ?>
+
+        <!-- Content Area -->
+        <div class="content">
+            <?php if (isset($success_message)): ?>
+                <div style="background-color: #d4edda; color: #155724; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #c3e6cb;">
+                    <?php echo htmlspecialchars($success_message); ?>
+                </div>
+            <?php endif; ?>
         </div>
+        
     </div>
 
     <!-- Add Event Modal -->
@@ -713,11 +704,6 @@ if ($_POST) {
             alert('QR Code download functionality - In real application, this would generate and download a QR code image');
         }
 
-        function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                window.location.href = 'logout.php';
-            }
-        }
 
         // Close modal when clicking outside of it
         window.onclick = function(event) {
