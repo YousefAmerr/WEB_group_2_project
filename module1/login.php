@@ -56,19 +56,36 @@ $conn->close();
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f8f9fa;
+      position: relative;
+      margin: 0;
+      height: 100vh;
       display: flex;
       justify-content: center;
-      align-items: start;
-      padding-top: 60px;
-      height: 100vh;
+      align-items: center;
+      background-image: url('fkweb-welcometofkumpsa_.png'); /* Adjust path */
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      overflow: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5); /* black overlay with 50% opacity */
+      z-index: -1;
     }
     form {
-      background: #fff;
+      background: rgba(255, 255, 255, 0.9);
       padding: 30px;
       border-radius: 8px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      box-shadow: 0 0 8px rgba(0,0,0,0.2);
       width: 350px;
+      position: relative;
+      z-index: 1;
     }
     h2 {
       text-align: center;
@@ -93,42 +110,18 @@ $conn->close();
       color: red;
       text-align: center;
     }
-    body {
-  position: relative;
-  margin: 0;
-  height: 100vh;
-  font-family: Arial, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-image: url('fkweb-welcometofkumpsa_.png'); /* Adjust path */
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  overflow: hidden;
-}
-
-body::before {
-  content: "";
-  position: fixed;      /* cover entire viewport */
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* black overlay with 50% opacity */
-  z-index: -1;         /* behind the form */
-}
-
-form {
-  background: rgba(255, 255, 255, 0.9);
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 0 8px rgba(0,0,0,0.2);
-  width: 350px;
-  position: relative;
-  z-index: 1;          /* above overlay */
-}
-
+    .signup-link {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+    .signup-link a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    .signup-link a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -149,6 +142,10 @@ form {
   <input type="password" name="password" placeholder="Password" required>
 
   <button type="submit">Login</button>
+
+  <div class="signup-link">
+    Don't have an account? <a href="signup.php">Sign up here</a>
+  </div>
 </form>
 </body>
 </html>
