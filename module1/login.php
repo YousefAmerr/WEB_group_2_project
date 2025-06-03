@@ -11,22 +11,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Choose table and target page based on role
     if ($user_type === 'student') {
-        $table = 'student';
+        $stmt = $conn->prepare("SELECT * FROM student WHERE StuUsername = ? AND StuPassword = ?");
         $redirect = '../sideBar/Student_SideBar.php';
     } elseif ($user_type === 'advisor') {
-        $table = 'advisor';
+        $stmt = $conn->prepare("SELECT * FROM advisor WHERE adUsername = ? AND adPassword = ?");
         $redirect = '../sideBar/Advisor_SideBar.php';
     } elseif ($user_type === 'coordinator') {
-        $table = 'coordinator';
+        $stmt = $conn->prepare("SELECT * FROM petakomcoordinator WHERE CoUsername = ? AND CoPassword = ?");
         $redirect = '../sideBar/Coordinator_SideBar.php';
     } else {
         $message = "❌ Invalid user type selected.";
         $table = '';
     }
 
-    if ($table !== '') {
-        $sql = "SELECT * FROM $table WHERE username=? AND password=?";
-        $stmt = $conn->prepare($sql);
+
 
         if ($stmt) {
             $stmt->bind_param("ss", $username, $password);
@@ -44,8 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } else {
             $message = "❌ SQL Error: " . $conn->error;
         }
-    }
-}
+  }
 ?>
 
 
