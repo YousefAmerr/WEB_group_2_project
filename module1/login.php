@@ -93,6 +93,42 @@ $conn->close();
       color: red;
       text-align: center;
     }
+    body {
+  position: relative;
+  margin: 0;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-image: url('fkweb-welcometofkumpsa_.png'); /* Adjust path */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;      /* cover entire viewport */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* black overlay with 50% opacity */
+  z-index: -1;         /* behind the form */
+}
+
+form {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.2);
+  width: 350px;
+  position: relative;
+  z-index: 1;          /* above overlay */
+}
+
   </style>
 </head>
 <body>
