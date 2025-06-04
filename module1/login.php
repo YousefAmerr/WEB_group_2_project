@@ -1,153 +1,151 @@
 <?php
-session_start();
 include '../db_connect.php';
+
+session_start();
 
 $message = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST["username"] ?? '';
-    $password = $_POST["password"] ?? '';
     $user_type = $_POST["user_type"] ?? '';
+    $username = $_POST["username"];
+    $password = $_POST["password"];
 
-    // Choose table and target page based on role
     if ($user_type === 'student') {
-        $table = 'student';
-        $redirect = '../sideBar/Student_SideBar.php';
+        $sql = "SELECT * FROM student WHERE StuUsername = ? AND StuPassword = ?";
     } elseif ($user_type === 'advisor') {
-        $table = 'advisor';
-        $redirect = '../sideBar/Advisor_SideBar.php';
+        $sql = "SELECT * FROM advisor WHERE adUsername = ? AND adPassword = ?";
     } elseif ($user_type === 'coordinator') {
-        $table = 'coordinator';
-        $redirect = '../sideBar/Coordinator_SideBar.php';
+        $sql = "SELECT * FROM petakomcoordinator WHERE CoUsername = ? AND CoPassword = ?";
     } else {
-        $message = "❌ Invalid user type selected.";
-        $table = '';
+        $message = "❌ Invalid user type.";
     }
 
-    if ($table !== '') {
-        $sql = "SELECT * FROM $table WHERE username=? AND password=?";
+    if (!empty($sql)) {
         $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ss", $username, $password);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows === 1) {
+            $_SESSION["username"] = $username;
+            $_SESSION["user_type"] = $user_type;
 
-        if ($stmt) {
-            $stmt->bind_param("ss", $username, $password);
-            $stmt->execute();
-            $result = $stmt->get_result();
-
-            if ($result && $result->num_rows > 0) {
-                $_SESSION['username'] = $username;
-                $_SESSION['user_type'] = $user_type;
-                header("Location: $redirect");
-                exit();
-            } else {
-                $message = "❌ Invalid username or password for $user_type.";
+            // Redirect to different dashboards
+            if ($user_type === 'student') {
+                header("Location: ../sidebar/Student_SideBar.php");
+            } elseif ($user_type === 'advisor') {
+                header("Location: ../sidebar/Advisor_SideBar.php");
+            } elseif ($user_type === 'coordinator') {
+                header("Location: ../sidebar/Coordinator_SideBar.php");
             }
+            exit();
         } else {
-            $message = "❌ SQL Error: " . $conn->error;
+            $message = "❌ Invalid credentials.";
         }
+        $stmt->close();
     }
 }
+
+$conn->close();
 ?>
-
-
-
-
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
   <title>Login - MyPetakom</title>
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-  <link rel="stylesheet" href="login.css" />
   <style>
     body {
+      font-family: Arial, sans-serif;
+      position: relative;
       margin: 0;
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f5f6fa;
+      background-image: url('fkweb-welcometofkumpsa_.png'); /* Adjust path */
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      overflow: hidden;
     }
-
-    .login-container {
-      background-color: #fff;
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5); /* black overlay with 50% opacity */
+      z-index: -1;
+    }
+    form {
+      background: rgba(255, 255, 255, 0.9);
       padding: 30px;
       border-radius: 8px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-      width: 300px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.2);
+      width: 350px;
+      position: relative;
+      z-index: 1;
     }
-
     h2 {
       text-align: center;
-      margin-bottom: 20px;
     }
-
-    label {
-      font-size: 14px;
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    input {
+    label, select, input {
       width: 100%;
+      margin: 10px 0;
       padding: 10px;
-      margin-bottom: 15px;
       font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
     }
-
     button {
-      width: 100%;
-      padding: 10px;
       background-color: #007bff;
       color: white;
       border: none;
-      border-radius: 4px;
-      cursor: pointer;
+      width: 100%;
+      padding: 10px;
       font-size: 16px;
+      margin-top: 10px;
+      cursor: pointer;
     }
-
-    button:hover {
-      background-color: #0056b3;
-    }
-
-    .error-message {
+    .error {
       color: red;
       text-align: center;
-      margin-bottom: 10px;
     }
-
+    .signup-link {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+    .signup-link a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    .signup-link a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
+<form method="post" action="">
+  <h2>Login - MyPetakom</h2>
 
-  <div class="login-wrapper">
-  <h2>MyPetakom Login</h2>
-  <p>Please enter your credentials to continue</p>
+  <div class="error"><?php if (!empty($message)) echo htmlspecialchars($message); ?></div>
 
-    <div class="error-message">
-    </div>
-
-    <form method="post" action="">
-  <input type="text" name="username" placeholder="Username" required>
-  <input type="password" name="password" placeholder="Password" required>
-
-  <select name="user_type" required>
+  <label for="user_type">User Type</label>
+  <select name="user_type" id="user_type" required>
     <option value="">Select Role</option>
     <option value="student">Student</option>
     <option value="advisor">Advisor</option>
     <option value="coordinator">Coordinator</option>
   </select>
 
+  <input type="text" name="username" placeholder="Username" required>
+  <input type="password" name="password" placeholder="Password" required>
+
   <button type="submit">Login</button>
-</form>
 
-
+  <div class="signup-link">
+    Don't have an account? <a href="signup.php">Sign up here</a>
   </div>
-
+</form>
 </body>
 </html>
-

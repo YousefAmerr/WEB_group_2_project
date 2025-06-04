@@ -16,6 +16,8 @@
     <!-- option 2 -->
     <div class="nav-item"><i class="material-icons">assignment</i><a href="../module4/claimAward.php">Claim Merit Award</a></div>
     <!-- option 3 -->
+     <div class="nav-item"><i class="material-icons">list</i><a href="../module2/viewEventInfo.php">View Event Info</a></div>
+    <!-- option 4 -->
   </div>
 </div>
 

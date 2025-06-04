@@ -229,6 +229,8 @@ h2 {
     <!-- option 2 -->
     <div class="nav-item"><i class="material-icons">list</i><a href="../module4/advisor_student_claim_merit.php">Student Claim Merit</a></div>
     <!-- option 3 -->
+     <div class="nav-item"><i class="material-icons">list</i><a href="../module2/manageEvents.php">Manage Events</a></div>
+    <!-- option 4 -->
   </div>
 </div>
 
