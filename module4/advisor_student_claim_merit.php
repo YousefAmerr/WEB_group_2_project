@@ -1,11 +1,9 @@
 <?php
 session_start();
 
-// Include database connection
 include '../db_connect.php';
 include '../sideBar/Advisor_SideBar.php';
 
-// Check if advisor is logged in
 $username = $_SESSION['username'] ?? '';
 if (empty($username)) {
     header("Location: ../module1/login.php");
@@ -25,7 +23,7 @@ if ($result && $result->num_rows > 0) {
 }
 $stmt->close();
 
-// Handle approve/reject actions
+// approve/reject actions
 if ($_POST && isset($_POST['action']) && isset($_POST['claim_id'])) {
     $claim_id = $_POST['claim_id'];
     $action = $_POST['action'];
@@ -48,7 +46,7 @@ if ($_POST && isset($_POST['action']) && isset($_POST['claim_id'])) {
     }
 }
 
-// Get filter parameters
+// filter parameters
 $statusFilter = isset($_GET['status']) ? $_GET['status'] : '';
 $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
 
@@ -61,369 +59,15 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Student Merit Claims Review</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-    <style>
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            padding-top: 70px;
-            padding-left: 20px;
-            padding-right: 20px;
-            background-color: #f8f9fa;
-        }
-
-        .page_title {
-            font-size: 28px;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .filters-container {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-
-        .filter-row {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .filter-group label {
-            font-weight: 600;
-            color: #495057;
-            font-size: 14px;
-        }
-
-        .filter-group select {
-            padding: 8px 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 6px;
-            font-size: 14px;
-            background: white;
-            min-width: 150px;
-        }
-
-        .filter-group select:focus {
-            outline: none;
-            border-color: #7367f0;
-        }
-
-        .claims-container {
-            display: grid;
-            gap: 20px;
-        }
-
-        .claim-card {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            border-left: 4px solid #17a2b8;
-        }
-
-        .claim-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-
-        .claim-header {
-            display: flex;
-            justify-content: between;
-            align-items: flex-start;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .claim-info {
-            flex: 1;
-        }
-
-        .claim-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 4px;
-        }
-
-        .claim-subtitle {
-            color: #6c757d;
-            font-size: 14px;
-        }
-
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .status-pending {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-
-        .status-approved {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status-rejected {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .claim-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-
-        .detail-item {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .detail-label {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: #6c757d;
-            letter-spacing: 0.5px;
-        }
-
-        .detail-value {
-            font-size: 14px;
-            color: #2c3e50;
-            font-weight: 500;
-        }
-
-        .claim-actions {
-            display: flex;
-            gap: 10px;
-            padding-top: 16px;
-            border-top: 1px solid #e9ecef;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-view {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .btn-view:hover {
-            background-color: #0056b3;
-        }
-
-        .btn-approve {
-            background-color: #28a745;
-            color: white;
-        }
-
-        .btn-approve:hover {
-            background-color: #218838;
-        }
-
-        .btn-reject {
-            background-color: #dc3545;
-            color: white;
-        }
-
-        .btn-reject:hover {
-            background-color: #c82333;
-        }
-
-        .no-claims {
-            text-align: center;
-            padding: 60px 20px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .no-claims i {
-            font-size: 64px;
-            color: #dee2e6;
-            margin-bottom: 16px;
-        }
-
-        .no-claims h3 {
-            color: #6c757d;
-            margin-bottom: 8px;
-        }
-
-        .no-claims p {
-            color: #adb5bd;
-        }
-
-        .alert {
-            padding: 12px 16px;
-            margin-bottom: 20px;
-            border-radius: 6px;
-            font-weight: 500;
-        }
-
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-        }
-
-        .modal-content {
-            background-color: white;
-            margin: 5% auto;
-            padding: 0;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            padding: 20px;
-            border-bottom: 1px solid #e9ecef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header h2 {
-            margin: 0;
-            color: #2c3e50;
-        }
-
-        .close {
-            color: #adb5bd;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            line-height: 1;
-        }
-
-        .close:hover {
-            color: #6c757d;
-        }
-
-        .modal-body {
-            padding: 20px;
-        }
-
-        .student-info {
-            background-color: #f8f9fa;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .support-doc {
-            margin-top: 16px;
-        }
-
-        .support-doc img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .stat-number {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .stat-label {
-            color: #6c757d;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .stat-pending .stat-number { color: #f39c12; }
-        .stat-approved .stat-number { color: #27ae60; }
-        .stat-rejected .stat-number { color: #e74c3c; }
-        .stat-total .stat-number { color: #3498db; }
-    </style>
+    <link rel="stylesheet" href="css/advisor.css" />
 </head>
 <body>
     <div class="main-content">
         <h1 class="page_title">Student Merit Claims Review</h1>
 
-        <?php if (isset($message)): ?>
-            <div class="alert alert-<?php echo $message_type; ?>">
-                <?php echo htmlspecialchars($message); ?>
-            </div>
-        <?php endif; ?>
+
 
         <?php
-        // Get statistics
         $stats_sql = "SELECT 
                         COUNT(*) as total,
                         SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) as pending,
@@ -431,7 +75,7 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                         SUM(CASE WHEN status = 'Rejected' THEN 1 ELSE 0 END) as rejected
                       FROM merit_claims";
         $stats_result = $conn->query($stats_sql);
-        $stats = $stats_result->fetch_assoc();
+        $stats = $stats_result ? $stats_result->fetch_assoc() : ['total' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0];
         ?>
 
         <div class="stats-container">
@@ -474,9 +118,11 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                                            INNER JOIN merit_claims mc ON s.studentID = mc.studentID 
                                            ORDER BY s.studentName";
                             $students_result = $conn->query($students_sql);
-                            while ($student = $students_result->fetch_assoc()) {
-                                $selected = ($studentFilter == $student['studentID']) ? 'selected' : '';
-                                echo "<option value='{$student['studentID']}' $selected>{$student['studentName']}</option>";
+                            if ($students_result) {
+                                while ($student = $students_result->fetch_assoc()) {
+                                    $selected = ($studentFilter == $student['studentID']) ? 'selected' : '';
+                                    echo "<option value='{$student['studentID']}' $selected>{$student['studentName']}</option>";
+                                }
                             }
                             ?>
                         </select>
@@ -489,7 +135,7 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
             <?php
             try {
                 // Build query with filters
-                $sql = "SELECT mc.*, s.studentName, s.studentEmail, s.studentCard, e.eventName, e.eventLevel 
+                $sql = "SELECT mc.*, s.studentName, s.studentEmail, e.eventName, e.eventLevel 
                         FROM merit_claims mc
                         JOIN student s ON mc.studentID = s.studentID
                         LEFT JOIN event e ON mc.eventID = e.eventID
@@ -528,10 +174,9 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                 } else {
                     while ($row = $result->fetch_assoc()) {
                         $claimId = $row['claim_id'];
-                        $studentName = htmlspecialchars($row['studentName']);
-                        $studentCard = htmlspecialchars($row['studentCard']);
-                        $studentEmail = htmlspecialchars($row['studentEmail']);
-                        $eventName = htmlspecialchars($row['eventName'] ?? 'Event Not Found');
+                        $studentName = htmlspecialchars($row['studentName'] ?? '');
+                        $studentEmail = htmlspecialchars($row['studentEmail'] ?? '');
+                        $eventName = htmlspecialchars($row['eventName'] ?? 'General Merit Claim');
                         $eventLevel = htmlspecialchars($row['eventLevel'] ?? 'N/A');
                         $status = $row['status'];
                         $claimDate = date('M d, Y H:i', strtotime($row['claim_date']));
@@ -552,7 +197,11 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                             <div class='claim-details'>
                                 <div class='detail-item'>
                                     <div class='detail-label'>Student</div>
-                                    <div class='detail-value'>{$studentName} ({$studentCard})</div>
+                                    <div class='detail-value'>{$studentName} </div>
+                                </div>
+                                <div class='detail-item'>
+                                    <div class='detail-label'>Email</div>
+                                    <div class='detail-value'>{$studentEmail}</div>
                                 </div>
                                 <div class='detail-item'>
                                     <div class='detail-label'>Event</div>
@@ -568,87 +217,115 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                                 </div>
                             </div>
                             
-                            <div class='claim-actions'>
-                                <button class='btn btn-view' onclick='viewClaimDetails({$claimId})'>
-                                    <i class='material-icons' style='font-size: 16px;'>visibility</i>
-                                    View Details
-                                </button>";
+                            <div class='claim-actions'>";
                         
+                        if (!empty($supportDoc)) {
+                            echo "<button class='btn btn-view' onclick='viewDocument(\"{$supportDoc}\", {$claimId})'>
+                                    <i class='material-icons'>visibility</i>
+                                    View Document
+                                  </button>";
+                        }
+                        
+                        // Action buttons only for pending claims
                         if ($status === 'Pending') {
-                            echo "
-                                <form method='POST' style='display: inline;' onsubmit='return confirm(\"Are you sure you want to approve this claim?\")'>
+                            echo "<form method='POST' style='display: inline;' onsubmit='return confirmAction(\"approve\")'>
                                     <input type='hidden' name='claim_id' value='{$claimId}'>
                                     <input type='hidden' name='action' value='approve'>
                                     <button type='submit' class='btn btn-approve'>
-                                        <i class='material-icons' style='font-size: 16px;'>check</i>
+                                        <i class='material-icons'>check</i>
                                         Approve
                                     </button>
-                                </form>
-                                <form method='POST' style='display: inline;' onsubmit='return confirm(\"Are you sure you want to reject this claim?\")'>
+                                  </form>
+                                  
+                                  <form method='POST' style='display: inline;' onsubmit='return confirmAction(\"reject\")'>
                                     <input type='hidden' name='claim_id' value='{$claimId}'>
                                     <input type='hidden' name='action' value='reject'>
                                     <button type='submit' class='btn btn-reject'>
-                                        <i class='material-icons' style='font-size: 16px;'>close</i>
+                                        <i class='material-icons'>close</i>
                                         Reject
                                     </button>
-                                </form>";
+                                  </form>";
                         }
                         
-                        echo "
-                            </div>
+                        echo "    </div>
                         </div>";
                     }
                 }
-                
                 $stmt->close();
             } catch (Exception $e) {
-                echo "<div class='alert alert-error'>Error loading claims: " . $e->getMessage() . "</div>";
+                echo '<div class="alert alert-error">Error loading claims: ' . htmlspecialchars($e->getMessage()) . '</div>';
             }
             ?>
         </div>
     </div>
 
-    <!-- Modal for viewing claim details -->
-    <div id="claimModal" class="modal">
+    <!-- Document View Modal -->
+    <div id="documentModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Claim Details</h2>
-                <span class="close" onclick="closeModal()">&times;</span>
+                <h2>Supporting Document</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
             </div>
-            <div class="modal-body" id="modalBody">
-                <!-- Content will be loaded here -->
+            <div class="modal-body">
+                <div class="document-info">
+                    <h4>Claim #<span id="modalClaimId"></span></h4>
+                    <p>Review the supporting document for this merit claim.</p>
+                </div>
+                <div id="documentContainer">
+                    <img id="documentImage" class="document-preview" style="display: none;" />
+                    <div id="documentError" style="display: none; text-align: center; color: #dc3545;">
+                        <i class="material-icons" style="font-size: 48px;">error</i>
+                        <p>Unable to load document</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        function viewClaimDetails(claimId) {
-            // Show loading
-            document.getElementById('modalBody').innerHTML = '<p>Loading claim details...</p>';
-            document.getElementById('claimModal').style.display = 'block';
+        function confirmAction(action) {
+            const actionText = action === 'approve' ? 'approve' : 'reject';
+            return confirm(`Are you sure you want to ${actionText} this merit claim?`);
+        }
+
+        function viewDocument(filename, claimId) {
+            const modal = document.getElementById('documentModal');
+            const modalClaimId = document.getElementById('modalClaimId');
+            const documentImage = document.getElementById('documentImage');
+            const documentError = document.getElementById('documentError');
             
-            // Fetch claim details via AJAX
-            fetch('get_claim_details.php?claim_id=' + claimId)
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('modalBody').innerHTML = data;
-                })
-                .catch(error => {
-                    document.getElementById('modalBody').innerHTML = '<p>Error loading claim details.</p>';
-                });
+            modalClaimId.textContent = claimId;
+            
+            documentImage.style.display = 'none';
+            documentError.style.display = 'none';
+            
+            documentImage.onload = function() {
+                documentImage.style.display = 'block';
+            };
+            
+            documentImage.onerror = function() {
+                documentError.style.display = 'block';
+            };
+            
+            // Fix the path - use forward slash and correct relative path
+            documentImage.src = 'uploads/merit_claims/' + filename;
+            
+            modal.style.display = 'block';
         }
 
         function closeModal() {
-            document.getElementById('claimModal').style.display = 'none';
+            document.getElementById('documentModal').style.display = 'none';
         }
 
-        // Close modal when clicking outside
+        // Close modal when clicking outside of it
         window.onclick = function(event) {
-            const modal = document.getElementById('claimModal');
-            if (event.target == modal) {
+            const modal = document.getElementById('documentModal');
+            if (event.target === modal) {
                 modal.style.display = 'none';
             }
         }
+
+        
     </script>
 </body>
 </html>

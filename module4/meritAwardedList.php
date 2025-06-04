@@ -1,14 +1,13 @@
 <?php
 session_start();
 
-// Include database connection
 include '../db_connect.php';
 
-// Get the student ID from session
-// First, get the username from session
+
+
+// Get the studentID from the database and check if student exist
 $username = $_SESSION['username'] ?? '';
 
-// Then get the studentID from the database using the username
 $studentID = '';
 if (!empty($username)) {
     $student_query = "SELECT studentID FROM student WHERE username = ?";
@@ -23,14 +22,69 @@ if (!empty($username)) {
     $stmt->close();
 }
 
-// If no studentID found, redirect to login
 if (empty($studentID)) {
     header("Location: ../module1/login.php");
     exit();
 }
 
+
 // Get selected role filter
 $roleFilter = isset($_GET['category']) ? $_GET['category'] : '';
+
+
+$meritQuery = "SELECT ma.*, e.eventName, e.eventLocation, e.eventLevel, e.semester, 
+               COALESCE(app.role_type, 'participant') as role_type,
+               COALESCE(app.submissionDate, att.attendanceDate) as submissionDate
+               FROM meritaward ma
+               JOIN event e ON ma.eventID = e.eventID
+               LEFT JOIN meritapplication app ON ma.studentID = app.studentID AND ma.eventID = app.eventID
+               LEFT JOIN attendancecslot acs ON ma.studentID = acs.studentID
+               LEFT JOIN attendance att ON acs.attendanceID = att.attendanceID AND att.eventID = ma.eventID
+               WHERE ma.studentID = ?";
+
+// Add role filter if selected
+$params = [$studentID];
+if (!empty($roleFilter)) {
+    $meritQuery .= " AND COALESCE(app.role_type, 'participant') = ?";
+    $params[] = $roleFilter;
+}
+
+$meritQuery .= " ORDER BY e.semester DESC, ma.meritPoints DESC";
+
+$stmt = $conn->prepare($meritQuery);
+if (!empty($roleFilter)) {
+    $stmt->bind_param("ss", $studentID, $roleFilter);
+} else {
+    $stmt->bind_param("s", $studentID);
+}
+$stmt->execute();
+$meritResult = $stmt->get_result();
+
+// Calculate totals
+$totalEventCount = 0;
+$grandTotal = 0;
+$semester2Count = 0;
+$semester2Total = 0;
+
+$meritData = [];
+if ($meritResult) {
+    while ($row = $meritResult->fetch_assoc()) {
+        $meritData[] = $row;
+        $totalEventCount++;
+        $grandTotal += $row['meritPoints'];
+        
+        if ($row['semester'] == '2') {
+            $semester2Count++;
+            $semester2Total += $row['meritPoints'];
+        }
+    }
+}
+
+
+include 'merit_functions.php';
+
+calculate_Committee_Main_Committee_Merits();
+calculateParticipantMerits();
 
 ?>
 
@@ -53,243 +107,109 @@ $roleFilter = isset($_GET['category']) ? $_GET['category'] : '';
       <form class="border_filter" method="GET" action="">
         <select id="category" name="category" onchange="this.form.submit()">
           <option value="">-- Select Role --</option>
-          <option value="Participant" <?php echo ($roleFilter == 'Participant') ? 'selected' : ''; ?>>Participant</option>
-          <option value="Committee" <?php echo ($roleFilter == 'Committee') ? 'selected' : ''; ?>>Committee</option>
-          <option value="Main-Committee" <?php echo ($roleFilter == 'Main-Committee') ? 'selected' : ''; ?>>Main Committee</option>
+          <option value="committee" <?php echo ($roleFilter == 'committee') ? 'selected' : ''; ?>>Committee</option>
+          <option value="main-committee" <?php echo ($roleFilter == 'main-committee') ? 'selected' : ''; ?>>Main Committee</option>
+          <option value="participant" <?php echo ($roleFilter == 'participant') ? 'selected' : ''; ?>>Participant</option>
         </select>
       </form>
 
       <div class="event-list">
         <?php
-        // Initialize total merit score and event count
-        $totalMeritScore = 0;
-        $eventCount = 0;
-
-        try {
-            // Build the SQL query based on filter - FIXED: Get semester from event table
-            $sql = "SELECT e.eventName as event_name, 
-                           ma.role_type AS role, 
-                           ma.meritPoints AS merit_score,
-                           e.semester,
-                           ma.award_date
-                    FROM event e
-                    JOIN meritaward ma ON e.eventID = ma.eventID
-                    WHERE ma.studentID = ?";
-            
-            // Add role filter if selected
-            if (!empty($roleFilter)) {
-                $sql .= " AND ma.role_type = ?";
-            }
-            
-            $sql .= " ORDER BY ma.award_date DESC";
-
-            $stmt = $conn->prepare($sql);
-            
-            if ($stmt === false) {
-                throw new Exception("Error preparing query: " . $conn->error);
-            }
-            
-            // Bind parameters based on whether filter is applied
-            if (!empty($roleFilter)) {
-                $stmt->bind_param("ss", $studentID, $roleFilter);
-            } else {
-                $stmt->bind_param("s", $studentID);
-            }
-
-            if (!$stmt->execute()) {
-                throw new Exception("Error executing query: " . $stmt->error);
-            }
-            
-            $result = $stmt->get_result();
-            $eventCount = $result->num_rows;
-
-            if ($eventCount === 0) {
-                echo "<div class='no-events'>";
-                echo "<p>No events found for the selected criteria.</p>";
-                echo "</div>";
-            } else {
-                while ($row = $result->fetch_assoc()) {
-                    $eventName = htmlspecialchars($row['event_name']);
-                    $role = htmlspecialchars($row['role'] ?? 'Not Specified');
-                    $meritScore = intval($row['merit_score'] ?? 0);
-                    $semester = htmlspecialchars($row['semester'] ?? 'Not Specified');
+        if (!empty($meritData)) {
+            foreach ($meritData as $merit) {
+                $roleDisplay = !empty($merit['role_type']) ? ucwords(str_replace('-', ' ', $merit['role_type'])) : 'N/A';
+                $eventDate = !empty($merit['submissionDate']) ? date('d/m/Y', strtotime($merit['submissionDate'])) : 'N/A';
+                ?>
+                <div class="event-card">
+                    <div  class="sections_border">
+                        <h3>Event Name: <?php echo ($merit['eventName']); ?></h3>
+                        
                     
-                    $totalMeritScore += $meritScore;
-
-                    echo "
-                        <div class='sections_border'>
-                            <h4>Event Name:  $eventName</h4>
-                            <div class='event-details'>
-                                <p><strong>Semester:</strong> $semester</p>
-                            </div>
-                            <div class='sections_border_space'>
-                                <h5>Role: $role</h5>
-                                <h5 style='float:right;'>Score: $meritScore</h5>
-                            </div>
-                        </div>";
-                }
+                    
+                        <p><strong>Event Level:</strong> <span class="event-level <?php echo ($merit['eventLevel']); ?>"><?php echo $merit['eventLevel']; ?></span></p>
+                        <p><strong>Event Location:</strong> <?php echo ($merit['eventLocation']); ?></p>
+                        <p><strong>Semester:</strong> <?php echo $merit['semester']; ?></p>
+                        <p><strong>Date:</strong> <?php echo $eventDate; ?></p>
+                        <p><strong>Role:</strong> <?php echo $roleDisplay; ?></p>
+                        <div class="sections_border_space">
+                        <span class="merit-score"><strong>Score:</strong> <?php echo $merit['meritPoints']; ?></span>
+                    </div>
+                </div>
+                </div>
+                <?php
             }
-
-            $stmt->close();
-
-            // FIXED: Get total merit score ONLY for semester 2 - Join with event table to get semester
-            $totalSQL = "SELECT 
-                            SUM(ma.meritPoints) AS total_merit,
-                            COUNT(ma.ma_ID) AS event_count
-                        FROM meritaward ma
-                        JOIN event e ON ma.eventID = e.eventID
-                        WHERE ma.studentID = ? AND e.semester = '2'";
-
-            $totalStmt = $conn->prepare($totalSQL);
-            
-            if ($totalStmt === false) {
-                throw new Exception("Error preparing total summary query: " . $conn->error);
-            }
-            
-            $totalStmt->bind_param("s", $studentID);
-            
-            if (!$totalStmt->execute()) {
-                throw new Exception("Error executing total summary query: " . $totalStmt->error);
-            }
-            
-            $totalResult = $totalStmt->get_result();
-            $totalData = $totalResult->fetch_assoc();
-            $grandTotal = $totalData['total_merit'] ?? 0;
-            $totalEventCount = $totalData['event_count'] ?? 0;
-
-            $totalStmt->close();
-
-        } catch (Exception $e) {
-            echo "<div class='alert alert-danger'>" . $e->getMessage() . "</div>";
-            $grandTotal = 0;
-            $totalEventCount = 0;
+        } else {
+            echo '<div class="no-events"><p>No merit awards found.</p></div>';
         }
         ?> 
       </div>
     </div>
 
     <div class="summary-container">
-      <div class="summary-left">
+    <div class="summary-left">
         <h3>Semester 2 Merits Summary</h3>
         <div class="merit_summary_box">
-          <p><strong>Total Events Participated (Semester 2):</strong> <span style="padding-left: 30px;"><?php echo $totalEventCount; ?></span></p>
-          <p><strong>Total Semester 2 Merits Points:</strong> <span style="padding-left: 30px;"><?php echo $grandTotal; ?> </span></p>
-          <?php if (!empty($roleFilter)): ?>
-          <?php endif; ?>
+            <p><strong>Total Events Participated (Semester 2):</strong> <span style="padding-left: 30px;"><?php echo getSemester2EventCount($studentID); ?></span></p>
+            <p><strong>Total Semester 2 Merits Points:</strong> <span style="padding-left: 30px;"><?php echo getSemester2MeritTotal($studentID); ?></span></p>
+            <?php if (!empty($roleFilter)): ?>
+                <p><strong>Filtered by Role:</strong> <span style="padding-left: 30px;"><?php echo ucwords(str_replace('-', ' ', $roleFilter)); ?></span></p>
+            <?php endif; ?>
         </div>
-      </div>
+    </div>
 
-      <!-- Replace the QR section in your meritAwardedList.php with this improved version -->
-<div class="summary-right">
-    <h3>Scan for Complete Merit Report</h3>
-    <div class="qr_box">
-        <?php
-        // Generate QR code for the current student
-        $qr_image_path = "generate_qr.php?student_id=" . urlencode($studentID) . "&display=true";
-        
-        // Also create a direct link to the student info page
-        $direct_link = "student_info.php?student_id=" . urlencode($studentID);
-        ?>
-        <div style="text-align: center; padding: 20px;">
-            <!-- QR Code Image with improved error handling -->
-            <div id="qr-container-<?php echo $studentID; ?>">
-                <img id="qr-image-<?php echo $studentID; ?>" 
-                     src="<?php echo $qr_image_path; ?>" 
-                     alt="QR Code for Student Merit Report" 
-                     style="max-width: 200px; max-height: 200px; border: 2px solid #ddd; border-radius: 8px;"
-                     onload="handleQRLoad('<?php echo $studentID; ?>')"
-                     onerror="handleQRError('<?php echo $studentID; ?>', '<?php echo $direct_link; ?>')">
-            </div>
-            
-            <!-- Loading message -->
-            <div id="qr-loading-<?php echo $studentID; ?>" style="display: none; padding: 20px; border: 2px solid #ddd; border-radius: 8px; background-color: #f0f8ff;">
-                <p style="color: #666; margin: 0;">Generating QR Code...</p>
-            </div>
-            
-            <!-- Fallback error message -->
-            <div id="qr-error-<?php echo $studentID; ?>" style="display: none; padding: 20px; border: 2px solid #ddd; border-radius: 8px; background-color: #fff3cd;">
-                <p style="color: #856404; margin: 0; margin-bottom: 10px;">QR Code temporarily unavailable</p>
-                <a href="<?php echo $direct_link; ?>" target="_blank" 
-                   style="background: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">
-                    View Merit Report
-                </a>
-            </div>
-            
-            <p style="margin-top: 10px; font-size: 14px; color: #666;">
-                Scan this QR code to view your complete merit report
-            </p>
-            
-            <!-- Alternative access methods -->
-            <div style="margin-top: 2px; padding-top: 5px; border-top: 1px solid #eee;">
-                <p style="margin-bottom: 3px; font-size: 12px; color: #888;">Alternative Access:</p>
-                <a href="<?php echo $direct_link; ?>" target="_blank" 
-                   style="font-size: 12px; color: #007bff; text-decoration: none; margin-right: 5px;">
-                    📱 Direct Link
-                </a>
-                
-            </div>
-        </div>
+
+      <!-- QR Code Section -->
+      <div class="summary-right">
+          <h3>Scan for Complete Merit Report</h3>
+          <div class="qr_box">
+              <?php
+              $qr_image_path = "generate_qr.php?student_id=" . urlencode($studentID) . "&display=true";
+              $direct_link = "student_info.php?student_id=" . urlencode($studentID);
+              ?>
+              <div style="text-align: center; padding: 20px;">
+                  <div id="qr-container-<?php echo $studentID; ?>">
+                      <img id="qr-image-<?php echo $studentID; ?>" 
+                           src="<?php echo $qr_image_path; ?>" 
+                           alt="QR Code for Student Merit Report" 
+                           style="max-width: 200px; max-height: 200px; border: 2px solid #ddd; border-radius: 8px;"
+                           onload="handleQRLoad('<?php echo $studentID; ?>')"
+                           onerror="handleQRError('<?php echo $studentID; ?>', '<?php echo $direct_link; ?>')">
+                  </div>
+                  
+                  <div id="qr-loading-<?php echo $studentID; ?>" style="display: none; padding: 20px; border: 2px solid #ddd; border-radius: 8px; background-color: #f0f8ff;">
+                      <p style="color: #666; margin: 0;">Generating QR Code...</p>
+                  </div>
+                  
+                  <div id="qr-error-<?php echo $studentID; ?>" style="display: none; padding: 20px; border: 2px solid #ddd; border-radius: 8px; background-color: #fff3cd;">
+                      <p style="color: #856404; margin: 0; margin-bottom: 10px;">QR Code temporarily unavailable</p>
+                      <a href="<?php echo $direct_link; ?>" target="_blank" 
+                         style="background: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">
+                          View Merit Report
+                      </a>
+                  </div>
+                  
+                  <p style="margin-top: 10px; font-size: 14px; color: #666;">
+                      Scan this QR code to view your complete merit report
+                  </p>
+                  
+                  <div style="margin-top: 2px; padding-top: 5px; border-top: 1px solid #eee;">
+                      <p style="margin-bottom: 3px; font-size: 12px; color: #888;">Alternative Access:</p>
+                      <a href="<?php echo $direct_link; ?>" target="_blank" 
+                         style="font-size: 12px; color: #007bff; text-decoration: none; margin-right: 5px;">
+                          📱 Direct Link
+                      </a>
+                  </div>
+              </div>
+          </div>
+      </div>
     </div>
 </div>
 
-<script>
-function handleQRLoad(studentId) {
-    // QR code loaded successfully
-    document.getElementById('qr-loading-' + studentId).style.display = 'none';
-}
 
-function handleQRError(studentId, directLink) {
-    // Hide the failed image and show error message
-    document.getElementById('qr-image-' + studentId).style.display = 'none';
-    document.getElementById('qr-loading-' + studentId).style.display = 'none';
-    document.getElementById('qr-error-' + studentId).style.display = 'block';
-    
-    // Try to reload the QR code after a delay
-    setTimeout(function() {
-        retryQRGeneration(studentId, directLink);
-    }, 3000);
-}
-
-function retryQRGeneration(studentId, directLink) {
-    // Show loading message
-    document.getElementById('qr-error-' + studentId).style.display = 'none';
-    document.getElementById('qr-loading-' + studentId).style.display = 'block';
-    
-    // Try to reload the image
-    var img = document.getElementById('qr-image-' + studentId);
-    var originalSrc = img.src;
-    img.src = originalSrc + '&retry=' + Date.now();
-    
-    // If it fails again after 5 seconds, show error
-    setTimeout(function() {
-        if (img.style.display === 'none') {
-            document.getElementById('qr-loading-' + studentId).style.display = 'none';
-            document.getElementById('qr-error-' + studentId).style.display = 'block';
-        }
-    }, 5000);
-}
-
-function shareReport(url) {
-    if (navigator.share) {
-        navigator.share({
-            title: 'Student Merit Report',
-            text: 'View my academic merit report',
-            url: url
-        });
-    } else {
-        // Fallback: copy to clipboard
-        navigator.clipboard.writeText(url).then(function() {
-            alert('Report link copied to clipboard!');
-        }).catch(function() {
-            // Final fallback: show the URL
-            prompt('Copy this link to share your report:', url);
-        });
-    }
-}
-</script>
+   
+  </div>
 </body>
 </html>
 <?php
-// Close database connection
 $conn->close();
 ?>
