@@ -12,7 +12,7 @@ if (empty($username)) {
 
 // Get advisor ID from session
 $advisorID = '';
-$advisor_query = "SELECT advisorID FROM advisor WHERE username = ?";
+$advisor_query = "SELECT advisorID FROM advisor WHERE adUsername = ?";
 $stmt = $conn->prepare($advisor_query);
 $stmt->bind_param("s", $username);
 $stmt->execute();
@@ -30,8 +30,8 @@ if ($_POST && isset($_POST['action']) && isset($_POST['claim_id'])) {
     
     if ($action === 'approve' || $action === 'reject') {
         $new_status = ($action === 'approve') ? 'Approved' : 'Rejected';
-        
-        $update_sql = "UPDATE merit_claims SET status = ? WHERE claim_id = ?";
+
+        $update_sql = "UPDATE meritclaim SET status = ? WHERE claim_id = ?";
         $update_stmt = $conn->prepare($update_sql);
         $update_stmt->bind_param("si", $new_status, $claim_id);
         
@@ -73,7 +73,7 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                         SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) as pending,
                         SUM(CASE WHEN status = 'Approved' THEN 1 ELSE 0 END) as approved,
                         SUM(CASE WHEN status = 'Rejected' THEN 1 ELSE 0 END) as rejected
-                      FROM merit_claims";
+                      FROM meritclaim";
         $stats_result = $conn->query($stats_sql);
         $stats = $stats_result ? $stats_result->fetch_assoc() : ['total' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0];
         ?>
@@ -115,7 +115,7 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                             <option value="">All Students</option>
                             <?php
                             $students_sql = "SELECT DISTINCT s.studentID, s.studentName FROM student s 
-                                           INNER JOIN merit_claims mc ON s.studentID = mc.studentID 
+                                           INNER JOIN meritclaim mc ON s.studentID = mc.studentID 
                                            ORDER BY s.studentName";
                             $students_result = $conn->query($students_sql);
                             if ($students_result) {
@@ -136,7 +136,7 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
             try {
                 // Build query with filters
                 $sql = "SELECT mc.*, s.studentName, s.studentEmail, e.eventName, e.eventLevel 
-                        FROM merit_claims mc
+                        FROM meritclaim mc
                         JOIN student s ON mc.studentID = s.studentID
                         LEFT JOIN event e ON mc.eventID = e.eventID
                         WHERE 1=1";
@@ -180,7 +180,7 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                         $eventLevel = htmlspecialchars($row['eventLevel'] ?? 'N/A');
                         $status = $row['status'];
                         $claimDate = date('M d, Y H:i', strtotime($row['claim_date']));
-                        $supportDoc = $row['support_doc'];
+                        $supportDoc = $row['supporingDoc'];
                         
                         $statusClass = 'status-' . strtolower($status);
                         
@@ -308,7 +308,7 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
             };
             
             // Fix the path - use forward slash and correct relative path
-            documentImage.src = 'uploads/merit_claims/' + filename;
+            documentImage.src = 'uploads/meritclaim/' + filename;
             
             modal.style.display = 'block';
         }

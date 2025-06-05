@@ -7,7 +7,7 @@ $username = $_SESSION['username'] ?? '';
 
 $studentID = '';
 if (!empty($username)) {
-    $student_query = "SELECT studentID FROM student WHERE username = ?";
+    $student_query = "SELECT studentID FROM student WHERE StuUsername = ?";
     $stmt = $conn->prepare($student_query);
     $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -33,7 +33,7 @@ $eventsCount = $result->fetch_assoc()['count'];
 
 $avgPoints = $eventsCount > 0 ? round($totalPoints / $eventsCount, 1) : 0;
 
-$result = $conn->query("SELECT COUNT(*) as count FROM merit_claims WHERE studentID = '$studentID' AND status = 'Pending'");
+$result = $conn->query("SELECT COUNT(*) as count FROM meritclaim WHERE studentID = '$studentID' AND status = 'Pending'");
 $pendingClaims = $result->fetch_assoc()['count'];
 
 // Chart data - Event Level
@@ -129,7 +129,7 @@ while ($row = $result->fetch_assoc()) {
 
 $result = $conn->query("
     SELECT e.eventName, mc.claim_date, mc.status 
-    FROM merit_claims mc 
+    FROM meritclaim mc 
     JOIN event e ON mc.eventID = e.eventID 
     WHERE mc.studentID = '$studentID' AND mc.status = 'Pending' 
     ORDER BY mc.claim_date DESC 

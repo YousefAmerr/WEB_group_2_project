@@ -6,7 +6,7 @@ include '../db_connect.php';
 $username = $_SESSION['username'] ?? '';
 $studentID = '';
 if ($username) {
-    $stmt = $conn->prepare("SELECT studentID FROM student WHERE username = ?");
+    $stmt = $conn->prepare("SELECT studentID FROM student WHERE StuUsername = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -25,7 +25,7 @@ if (!$studentID) {
 function canClaimEvent($conn, $studentID, $eventID) {
     $check_sql = "SELECT 1 FROM meritaward WHERE studentID = ? AND eventID = ? 
                   UNION 
-                  SELECT 1 FROM merit_claims WHERE studentID = ? AND eventID = ? AND status IN ('Pending', 'Approved')";
+                  SELECT 1 FROM meritclaim WHERE studentID = ? AND eventID = ? AND status IN ('Pending', 'Approved')";
     $stmt = $conn->prepare($check_sql);
     $stmt->bind_param("ssss", $studentID, $eventID, $studentID, $eventID);
     $stmt->execute();
@@ -47,7 +47,7 @@ function getEvents($conn, $studentID, $available_only = true) {
 
 // File upload handler
 function uploadFile($file) {
-    $target_dir = "uploads/merit_claims/";
+    $target_dir = "uploads/meritclaim/";
     if (!file_exists($target_dir)) mkdir($target_dir, 0777, true);
     
     $ext = strtolower(pathinfo($file["name"], PATHINFO_EXTENSION));
@@ -77,8 +77,8 @@ if ($_POST['action'] ?? false) {
             echo "<script>alert('Cannot submit claim.');</script>";
         } else {
             $supportDoc = '';
-            if ($_FILES['support_doc']['error'] == 0) {
-                $upload = uploadFile($_FILES['support_doc']);
+            if ($_FILES['supporingDoc']['error'] == 0) {
+                $upload = uploadFile($_FILES['supporingDoc']);
                 if (!$upload['success']) {
                     echo "<script>alert('" . addslashes($upload['message']) . "');</script>";
                     goto end_processing;
@@ -86,7 +86,7 @@ if ($_POST['action'] ?? false) {
                 $supportDoc = $upload['filename'];
             }
             
-            $stmt = $conn->prepare("INSERT INTO merit_claims (studentID, eventID, support_doc, status, claim_date) VALUES (?, ?, ?, 'Pending', NOW())");
+            $stmt = $conn->prepare("INSERT INTO meritclaim (studentID, eventID, supporingDoc, status, claim_date) VALUES (?, ?, ?, 'Pending', NOW())");
             $stmt->bind_param("sss", $studentID, $eventID, $supportDoc);
             echo $stmt->execute() ? "<script>alert('Claim submitted successfully!');</script>" : "<script>alert('Error submitting claim.');</script>";
             $stmt->close();
@@ -94,7 +94,7 @@ if ($_POST['action'] ?? false) {
     }
     
     if ($action == 'update_claim') {
-        $stmt = $conn->prepare("SELECT status, support_doc FROM merit_claims WHERE claim_id = ? AND studentID = ?");
+        $stmt = $conn->prepare("SELECT status, supporingDoc FROM meritclaim WHERE claim_id = ? AND studentID = ?");
         $stmt->bind_param("is", $claimID, $studentID);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -108,17 +108,17 @@ if ($_POST['action'] ?? false) {
             } else {
                 $supportDoc = $_POST['current_support_doc'] ?? '';
                 
-                if ($_FILES['support_doc']['error'] == 0) {
-                    $upload = uploadFile($_FILES['support_doc']);
+                if ($_FILES['supporingDoc']['error'] == 0) {
+                    $upload = uploadFile($_FILES['supporingDoc']);
                     if ($upload['success']) {
-                        if ($supportDoc && file_exists("uploads/merit_claims/" . $supportDoc)) {
-                            unlink("uploads/merit_claims/" . $supportDoc);
+                        if ($supportDoc && file_exists("uploads/meritclaim/" . $supportDoc)) {
+                            unlink("uploads/meritclaim/" . $supportDoc);
                         }
                         $supportDoc = $upload['filename'];
                     }
                 }
-                
-                $update_stmt = $conn->prepare("UPDATE merit_claims SET eventID = ?, support_doc = ? WHERE claim_id = ? AND studentID = ?");
+
+                $update_stmt = $conn->prepare("UPDATE meritclaim SET eventID = ?, supporingDoc = ? WHERE claim_id = ? AND studentID = ?");
                 $update_stmt->bind_param("ssis", $eventID, $supportDoc, $claimID, $studentID);
                 echo $update_stmt->execute() ? "<script>alert('Claim updated successfully!');</script>" : "<script>alert('Error updating claim.');</script>";
                 $update_stmt->close();
@@ -128,7 +128,7 @@ if ($_POST['action'] ?? false) {
     }
     
     if ($action == 'delete_claim') {
-        $stmt = $conn->prepare("SELECT status, support_doc FROM merit_claims WHERE claim_id = ? AND studentID = ?");
+        $stmt = $conn->prepare("SELECT status, supporingDoc FROM meritclaim WHERE claim_id = ? AND studentID = ?");
         $stmt->bind_param("is", $claimID, $studentID);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -136,11 +136,11 @@ if ($_POST['action'] ?? false) {
         if ($result->num_rows > 0) {
             $claim = $result->fetch_assoc();
             if ($claim['status'] != 'Approved') {
-                if ($claim['support_doc'] && file_exists("uploads/merit_claims/" . $claim['support_doc'])) {
-                    unlink("uploads/merit_claims/" . $claim['support_doc']);
+                if ($claim['supporingDoc'] && file_exists("uploads/meritclaim/" . $claim['supporingDoc'])) {
+                    unlink("uploads/meritclaim/" . $claim['supporingDoc']);
                 }
-                
-                $delete_stmt = $conn->prepare("DELETE FROM merit_claims WHERE claim_id = ? AND studentID = ?");
+
+                $delete_stmt = $conn->prepare("DELETE FROM meritclaim WHERE claim_id = ? AND studentID = ?");
                 $delete_stmt->bind_param("is", $claimID, $studentID);
                 echo $delete_stmt->execute() ? "<script>alert('Claim deleted successfully!');</script>" : "<script>alert('Error deleting claim.');</script>";
                 $delete_stmt->close();
@@ -191,7 +191,7 @@ $all_events = getEvents($conn, $studentID, false);
                     <div class="merit-section-title">Merit Claim List:</div>
                     
                     <?php
-                    $claims_stmt = $conn->prepare("SELECT mc.*, e.eventName, e.eventLocation, e.eventLevel, e.semester FROM merit_claims mc LEFT JOIN event e ON mc.eventID = e.eventID WHERE mc.studentID = ? ORDER BY mc.claim_date DESC");
+                    $claims_stmt = $conn->prepare("SELECT mc.*, e.eventName, e.eventLocation, e.eventLevel, e.semester FROM meritclaim mc LEFT JOIN event e ON mc.eventID = e.eventID WHERE mc.studentID = ? ORDER BY mc.claim_date DESC");
                     $claims_stmt->bind_param("s", $studentID);
                     $claims_stmt->execute();
                     $claims_result = $claims_stmt->get_result();
@@ -202,7 +202,7 @@ $all_events = getEvents($conn, $studentID, false);
                             $isApproved = $claim['status'] == 'Approved';
                             $updateBtn = $isApproved ? "disabled" : "onclick='openUpdateModal(" . htmlspecialchars(json_encode($claim)) . ")'";
                             $deleteBtn = $isApproved ? "disabled" : "onclick='deleteClaim(" . $claim['claim_id'] . ")'";
-                            $docLink = $claim['support_doc'] ? "<a href='uploads/merit_claims/" . htmlspecialchars($claim['support_doc']) . "' target='_blank' class='doc-link'>" . htmlspecialchars($claim['support_doc']) . "</a>" : "None";
+                            $docLink = $claim['supporingDoc'] ? "<a href='uploads/meritclaim/" . htmlspecialchars($claim['supporingDoc']) . "' target='_blank' class='doc-link'>" . htmlspecialchars($claim['supporingDoc']) . "</a>" : "None";
                             
                             echo "
                             <div class='claim-item'>
@@ -267,8 +267,8 @@ $all_events = getEvents($conn, $studentID, false);
                 </div>
                 
                 <div class="form-group">
-                    <label for="support_doc">Support Document:</label>
-                    <input type="file" name="support_doc" id="support_doc" accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx">
+                    <label for="supporingDoc">Support Document:</label>
+                    <input type="file" name="supporingDoc" id="supporingDoc" accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx">
                     <small class="file-info">Allowed formats: JPG, JPEG, PNG, GIF, PDF, DOC, DOCX (Max: 5MB)</small>
                     <div id="currentFileInfo" style="display: none; margin-top: 10px;">
                         <strong>Current file:</strong> <span id="currentFileName"></span>

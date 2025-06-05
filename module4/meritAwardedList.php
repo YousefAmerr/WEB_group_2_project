@@ -4,13 +4,11 @@ session_start();
 include '../db_connect.php';
 
 
-
-// Get the studentID from the database and check if student exist
 $username = $_SESSION['username'] ?? '';
 
 $studentID = '';
 if (!empty($username)) {
-    $student_query = "SELECT studentID FROM student WHERE username = ?";
+    $student_query = "SELECT studentID FROM student WHERE StuUsername = ?";
     $stmt = $conn->prepare($student_query);
     $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -26,7 +24,6 @@ if (empty($studentID)) {
     header("Location: ../module1/login.php");
     exit();
 }
-
 
 // Get selected role filter
 $roleFilter = isset($_GET['category']) ? $_GET['category'] : '';
