@@ -151,6 +151,7 @@ function getStatusClass($status) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyPetakom - View Events</title>
     <link rel="stylesheet" href="viewEventInfo.css">
+    <link rel="stylesheet" href="../sideBar/side.css">
 </head>
 <body>
     <?php include '../sideBar/Student_SideBar.php'; ?>

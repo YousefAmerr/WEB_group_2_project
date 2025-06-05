@@ -205,8 +205,6 @@ calculateParticipantMerits();
     </div>
 </div>
 
-
-   
   </div>
 </body>
 </html>

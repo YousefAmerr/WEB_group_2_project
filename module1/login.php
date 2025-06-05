@@ -1,7 +1,9 @@
 <?php
-include '../db_connect.php';
 
 session_start();
+include '../db_connect.php';
+
+
 
 $message = '';
 
@@ -31,9 +33,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             // Redirect to different dashboards
             if ($user_type === 'student') {
-                header("Location: ../sidebar/Student_SideBar.php");
+                header("Location: ../module4/dashboard.php");
             } elseif ($user_type === 'advisor') {
-                header("Location: ../sidebar/Advisor_SideBar.php");
+                header("Location: ../module2/dashboardAdivisor.php");
             } elseif ($user_type === 'coordinator') {
                 header("Location: ../sidebar/Coordinator_SideBar.php");
             }

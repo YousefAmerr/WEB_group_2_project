@@ -51,10 +51,9 @@ while ($row = $result->fetch_assoc()) {
 $levelLabels = array_column($eventLevelData, 'eventLevel');
 $levelPoints = array_column($eventLevelData, 'points');
 
-// Chart data - Role Type (FIXED VERSION)
 $roleData = [];
 
-// Get committee points - merit awards where student has approved committee role for that specific event
+// Get committee points 
 $result = $conn->query("
     SELECT COALESCE(SUM(mw.meritPoints), 0) as points
     FROM meritaward mw
@@ -69,7 +68,7 @@ $result = $conn->query("
 ");
 $committeePoints = $result->fetch_assoc()['points'];
 
-// Get main-committee points - merit awards where student has approved main-committee role for that specific event
+// Get main-committee points 
 $result = $conn->query("
     SELECT COALESCE(SUM(mw.meritPoints), 0) as points
     FROM meritaward mw
@@ -84,7 +83,7 @@ $result = $conn->query("
 ");
 $mainCommitteePoints = $result->fetch_assoc()['points'];
 
-// Get participant points - merit awards where student has NO approved committee/main-committee role for that specific event
+// Get participant points 
 $result = $conn->query("
     SELECT COALESCE(SUM(mw.meritPoints), 0) as points
     FROM meritaward mw
@@ -141,7 +140,7 @@ while ($row = $result->fetch_assoc()) {
     $claims[] = $row;
 }
 
-// Get student name for display (optional)
+// Get student name for display 
 $result = $conn->query("SELECT studentName FROM student WHERE studentID = '$studentID'");
 $studentName = $result->fetch_assoc()['studentName'] ?? 'Student';
 ?>
