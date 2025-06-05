@@ -1,7 +1,9 @@
 <?php
-include '../db_connect.php';
 
 session_start();
+include '../db_connect.php';
+
+
 
 $message = '';
 
@@ -33,7 +35,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($user_type === 'student') {
                 header("Location: ../module4/dashboard.php");
             } elseif ($user_type === 'advisor') {
-                header("Location: ../module2/dashboardAdvisor.php");
+                header("Location: ../sidebar/Advisor_SideBar.php");
             } elseif ($user_type === 'coordinator') {
                 header("Location: ../module3/coordinator/attendance_report.php");
             }

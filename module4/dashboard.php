@@ -1,7 +1,148 @@
 <?php
 session_start();
-
 include '../db_connect.php';
+include 'merit_functions.php';
+
+$username = $_SESSION['username'] ?? '';
+
+$studentID = '';
+if (!empty($username)) {
+    $student_query = "SELECT studentID FROM student WHERE username = ?";
+    $stmt = $conn->prepare($student_query);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result && $result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $studentID = $row['studentID'];
+    }
+    $stmt->close();
+}
+
+if (empty($studentID)) {
+    header("Location: ../module1/login.php");
+    exit();
+}
+
+// Fetch dashboard data
+$result = $conn->query("SELECT COALESCE(SUM(meritPoints), 0) as total FROM meritaward WHERE studentID = '$studentID'");
+$totalPoints = $result->fetch_assoc()['total'];
+
+$result = $conn->query("SELECT COUNT(DISTINCT eventID) as count FROM meritaward WHERE studentID = '$studentID'");
+$eventsCount = $result->fetch_assoc()['count'];
+
+$avgPoints = $eventsCount > 0 ? round($totalPoints / $eventsCount, 1) : 0;
+
+$result = $conn->query("SELECT COUNT(*) as count FROM merit_claims WHERE studentID = '$studentID' AND status = 'Pending'");
+$pendingClaims = $result->fetch_assoc()['count'];
+
+// Chart data - Event Level
+$result = $conn->query("
+    SELECT e.eventLevel, COALESCE(SUM(ma.meritPoints), 0) as points 
+    FROM meritaward ma 
+    JOIN event e ON ma.eventID = e.eventID 
+    WHERE ma.studentID = '$studentID' 
+    GROUP BY e.eventLevel
+");
+$eventLevelData = [];
+while ($row = $result->fetch_assoc()) {
+    $eventLevelData[] = $row;
+}
+$levelLabels = array_column($eventLevelData, 'eventLevel');
+$levelPoints = array_column($eventLevelData, 'points');
+
+$roleData = [];
+
+// Get committee points 
+$result = $conn->query("
+    SELECT COALESCE(SUM(mw.meritPoints), 0) as points
+    FROM meritaward mw
+    WHERE mw.studentID = '$studentID'
+    AND EXISTS (
+        SELECT 1 FROM meritapplication ma 
+        WHERE ma.studentID = mw.studentID 
+        AND ma.eventID = mw.eventID 
+        AND ma.status = 'Approved'
+        AND ma.role_type = 'committee'
+    )
+");
+$committeePoints = $result->fetch_assoc()['points'];
+
+// Get main-committee points 
+$result = $conn->query("
+    SELECT COALESCE(SUM(mw.meritPoints), 0) as points
+    FROM meritaward mw
+    WHERE mw.studentID = '$studentID'
+    AND EXISTS (
+        SELECT 1 FROM meritapplication ma 
+        WHERE ma.studentID = mw.studentID 
+        AND ma.eventID = mw.eventID 
+        AND ma.status = 'Approved'
+        AND ma.role_type = 'main-committee'
+    )
+");
+$mainCommitteePoints = $result->fetch_assoc()['points'];
+
+// Get participant points 
+$result = $conn->query("
+    SELECT COALESCE(SUM(mw.meritPoints), 0) as points
+    FROM meritaward mw
+    WHERE mw.studentID = '$studentID'
+    AND NOT EXISTS (
+        SELECT 1 FROM meritapplication ma 
+        WHERE ma.studentID = mw.studentID 
+        AND ma.eventID = mw.eventID 
+        AND ma.status = 'Approved'
+        AND ma.role_type IN ('committee', 'main-committee')
+    )
+");
+$participantPoints = $result->fetch_assoc()['points'];
+
+// Build role data array (only include roles with points > 0)
+if ($committeePoints > 0) {
+    $roleData[] = ['role_type' => 'committee', 'points' => $committeePoints];
+}
+if ($mainCommitteePoints > 0) {
+    $roleData[] = ['role_type' => 'main-committee', 'points' => $mainCommitteePoints];
+}
+if ($participantPoints > 0) {
+    $roleData[] = ['role_type' => 'participant', 'points' => $participantPoints];
+}
+
+$roleLabels = array_column($roleData, 'role_type');
+$rolePoints = array_column($roleData, 'points');
+
+// Recent activities
+$result = $conn->query("
+    SELECT ma.meritPoints, e.eventName, e.eventLevel, ma.ma_ID as id
+    FROM meritaward ma 
+    JOIN event e ON ma.eventID = e.eventID 
+    WHERE ma.studentID = '$studentID' 
+    ORDER BY ma.ma_ID DESC 
+    LIMIT 4
+");
+
+$activities = [];
+while ($row = $result->fetch_assoc()) {
+    $activities[] = $row;
+}
+
+$result = $conn->query("
+    SELECT e.eventName, mc.claim_date, mc.status 
+    FROM merit_claims mc 
+    JOIN event e ON mc.eventID = e.eventID 
+    WHERE mc.studentID = '$studentID' AND mc.status = 'Pending' 
+    ORDER BY mc.claim_date DESC 
+    LIMIT 1
+");
+$claims = [];
+while ($row = $result->fetch_assoc()) {
+    $claims[] = $row;
+}
+
+// Get student name for display 
+$result = $conn->query("SELECT studentName FROM student WHERE studentID = '$studentID'");
+$studentName = $result->fetch_assoc()['studentName'] ?? 'Student';
 ?>
 
 <!DOCTYPE html>
@@ -11,283 +152,133 @@ include '../db_connect.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyPetakom Student Dashboard</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-    <link rel="stylesheet" href="css/dashboard.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    
+    <link rel="stylesheet" href="../sideBar/side.css" />
+    <link rel="stylesheet" href="css/dashboard.css" />
 </head>
 <body>
     <?php include '../sideBar/Student_SideBar.php'; ?>
 
-    <!-- Main Content -->
     <div class="main-content">
-        
+        <div class="dashboard-header">
+            <h1>MyPetakom Dashboard</h1>
+            <p>Student Merit Point Tracking System - Welcome, <?= htmlspecialchars($studentName) ?>!</p>
+        </div>
 
-        <!-- Dashboard Content -->
-        <div class="content">
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <div class="stat-card merit-points">
-                    <div class="stat-number" id="totalMeritPoints">78</div>
-                    <div class="stat-label">Total Merit Points</div>
-                </div>
-                <div class="stat-card events-participated">
-                    <div class="stat-number" id="eventsParticipated">5</div>
-                    <div class="stat-label">Events Participated</div>
-                </div>
-                <div class="stat-card pending-claims">
-                    <div class="stat-number" id="pendingClaims">1</div>
-                    <div class="stat-label">Pending Claims</div>
-                </div>
-                <div class="stat-card avg-points">
-                    <div class="stat-number" id="avgPoints">15.6</div>
-                    <div class="stat-label">Avg Points/Event</div>
-                </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number"><?= $totalPoints ?></div>
+                <div class="stat-label">Total Merit Points</div>
             </div>
-
-            <!-- Charts Grid -->
-            <div class="dashboard-grid">
-                <!-- Merit Points Chart -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Merit Points by Role</h3>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="meritByRoleChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Monthly Activity Chart -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Monthly Activity</h3>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="monthlyActivityChart"></canvas>
-                    </div>
-                </div>
+            <div class="stat-card">
+                <div class="stat-number"><?= $eventsCount ?></div>
+                <div class="stat-label">Events Participated</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-number"><?= $avgPoints ?></div>
+                <div class="stat-label">Avg Points/Event</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><?= $pendingClaims ?></div>
+                <div class="stat-label">Pending Claims</div>
+            </div>
+        </div>
 
-            <!-- Progress Section -->
+        <div class="charts-section">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Semester Progress</h3>
+                    <h3 class="card-title">Merit Points by Event Level</h3>
                 </div>
-                <div class="progress-section">
-                    <div class="progress-item">
-                        <div class="progress-label">
-                            <span>Merit Points Goal</span>
-                            <span>78/100</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 78%"></div>
-                        </div>
-                    </div>
-                    <div class="progress-item">
-                        <div class="progress-label">
-                            <span>Events Participation</span>
-                            <span>5/8</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 62.5%"></div>
-                        </div>
-                    </div>
+                <div class="chart-container">
+                    <canvas id="eventLevelChart"></canvas>
                 </div>
             </div>
 
-            <!-- Recent Activity and Event History -->
-            <div class="dashboard-grid">
-                <!-- Recent Activity -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Recent Activity</h3>
-                    </div>
-                    <div class="recent-activity">
-                        <div class="activity-item">
-                            <div class="activity-icon merit">M</div>
-                            <div class="activity-content">
-                                <div class="activity-title">Merit Points Awarded</div>
-                                <div class="activity-desc">40 points for Main-Committee role in Computer event</div>
-                                <div class="activity-date">May 4, 2025</div>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon claim">C</div>
-                            <div class="activity-content">
-                                <div class="activity-title">Claim Submitted</div>
-                                <div class="activity-desc">Merit claim for Programming Contest 2024</div>
-                                <div class="activity-date">May 26, 2025</div>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon merit">M</div>
-                            <div class="activity-content">
-                                <div class="activity-title">Merit Points Awarded</div>
-                                <div class="activity-desc">10 points for Committee role in Hackathon 2024</div>
-                                <div class="activity-date">May 1, 2025</div>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon event">E</div>
-                            <div class="activity-content">
-                                <div class="activity-title">Event Participation</div>
-                                <div class="activity-desc">Participated in Tech Workshop</div>
-                                <div class="activity-date">Oct 5, 2024</div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Merit Points by Role Type</h3>
                 </div>
-
-                <!-- Event History Table -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Event History</h3>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Event</th>
-                                    <th>Role</th>
-                                    <th>Points</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody id="eventHistoryTable">
-                                <tr>
-                                    <td>Computer</td>
-                                    <td><span class="badge badge-main-committee">Main-Committee</span></td>
-                                    <td>40</td>
-                                    <td>May 4, 2025</td>
-                                </tr>
-                                <tr>
-                                    <td>Hackathon 2024</td>
-                                    <td><span class="badge badge-committee">Committee</span></td>
-                                    <td>10</td>
-                                    <td>May 1, 2025</td>
-                                </tr>
-                                <tr>
-                                    <td>hack</td>
-                                    <td><span class="badge badge-participant">Participant</span></td>
-                                    <td>5</td>
-                                    <td>May 2, 2025</td>
-                                </tr>
-                                <tr>
-                                    <td>Programming Contest 2024</td>
-                                    <td><span class="badge badge-main-committee">Main-Committee</span></td>
-                                    <td>25</td>
-                                    <td>Sep 15, 2024</td>
-                                </tr>
-                                <tr>
-                                    <td>Tech Workshop</td>
-                                    <td><span class="badge badge-participant">Participant</span></td>
-                                    <td>8</td>
-                                    <td>Oct 5, 2024</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="chart-container">
+                    <canvas id="roleTypeChart"></canvas>
                 </div>
             </div>
+        </div>
+
+        <div class="recent-activities">
+            <h3>Recent Activities</h3>
+            
+            <?php foreach($claims as $claim): ?>
+            <div class="activity-item">
+                <div class="activity-icon claim">C</div>
+                <div class="activity-content">
+                    <div class="activity-title">Merit Claim Pending</div>
+                    <div class="activity-desc">Application for <?= htmlspecialchars($claim['eventName']) ?> under review</div>
+                    <div class="activity-date"><?= date('M j, Y', strtotime($claim['claim_date'])) ?></div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+
+            <?php foreach($activities as $activity): ?>
+            <div class="activity-item">
+                <div class="activity-icon merit">M</div>
+                <div class="activity-content">
+                    <div class="activity-title">Merit Points Awarded - <?= htmlspecialchars($activity['eventLevel']) ?> Event</div>
+                    <div class="activity-desc"><?= $activity['meritPoints'] ?> points for <?= htmlspecialchars($activity['eventName']) ?></div>
+                    <div class="activity-date"><?= date('M j, Y') ?></div>
+                </div>
+            </div>
+            <?php endforeach; ?>
         </div>
     </div>
 
     <script>
-        // Initialize charts
-        function initCharts() {
-            // Merit Points by Role Chart
-            const ctx1 = document.getElementById('meritByRoleChart').getContext('2d');
-            new Chart(ctx1, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Participant', 'Committee', 'Main-Committee'],
-                    datasets: [{
-                        data: [13, 25, 40],
-                        backgroundColor: [
-                            '#4facfe',
-                            '#f093fb',
-                            '#43e97b'
-                        ],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
+        // Chart data
+var levelLabels = [<?php foreach($levelLabels as $label) echo "'".$label."'".($label === end($levelLabels) ? '' : ','); ?>];
+var levelPoints = [<?php foreach($levelPoints as $point) echo $point.($point === end($levelPoints) ? '' : ','); ?>];
+var roleLabels = [<?php foreach($roleLabels as $label) echo "'".$label."'".($label === end($roleLabels) ? '' : ','); ?>];
+var rolePoints = [<?php foreach($rolePoints as $point) echo $point.($point === end($rolePoints) ? '' : ','); ?>];
 
-            // Monthly Activity Chart
-            const ctx2 = document.getElementById('monthlyActivityChart').getContext('2d');
-            new Chart(ctx2, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                    datasets: [{
-                        label: 'Merit Points Earned',
-                        data: [15, 20, 0, 0, 55, 0],
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-        }
-
-        // Profile dropdown functionality
-        function toggleDropdown(event) {
-            event.stopPropagation();
-            document.getElementById("profileDropdown").classList.toggle("show");
-        }
-
-        window.onclick = function (event) {
-            if (!event.target.matches('.profile-btn') && !event.target.matches('.profile-img')) {
-                const dropdown = document.getElementById("profileDropdown");
-                if (dropdown.classList.contains("show")) {
-                    dropdown.classList.remove("show");
-                }
+// Event Level Chart
+new Chart(document.getElementById('eventLevelChart'), {
+    type: 'doughnut',
+    data: {
+        labels: levelLabels,
+        datasets: [{
+            data: levelPoints,
+            backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe']
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2.0,
+        plugins: {
+            legend: {
+                position: 'bottom'
             }
-        };
+        }
+    }
+});
 
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            initCharts();
-            
-            // Add some animation to stat cards
-            const statCards = document.querySelectorAll('.stat-card');
-            statCards.forEach((card, index) => {
-                setTimeout(() => {
-                    card.style.opacity = '0';
-                    card.style.transform = 'translateY(20px)';
-                    card.style.transition = 'all 0.5s ease';
-                    
-                    setTimeout(() => {
-                        card.style.opacity = '1';
-                        card.style.transform = 'translateY(0)';
-                    }, 100);
-                }, index * 100);
-            });
-        });
+// Role Type Chart
+new Chart(document.getElementById('roleTypeChart'), {
+    type: 'bar',
+    data: {
+        labels: roleLabels,
+        datasets: [{
+            data: rolePoints,
+            backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe']
+        }]
+    }
+});
+
+// Simple animations
+window.onload = function() {
+    var cards = document.querySelectorAll('.stat-card');
+    for(var i = 0; i < cards.length; i++) {
+        cards[i].style.opacity = '1';
+    }
+};
     </script>
 </body>
 </html>
-

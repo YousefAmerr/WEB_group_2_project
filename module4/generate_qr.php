@@ -1,192 +1,108 @@
 <?php
-session_start();
-
-// Enable error reporting for debugging (remove in production)
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-// Check if GD extension is loaded
-if (!extension_loaded('gd')) {
-    http_response_code(500);
-    die("GD extension is not installed. Please install php-gd extension.");
-}
-
-// Check if required GD functions exist
-$required_functions = ['imagecreate', 'imagecolorallocate', 'imagesetpixel', 'imagepng'];
-foreach ($required_functions as $func) {
-    if (!function_exists($func)) {
-        http_response_code(500);
-        die("Required GD function '$func' is not available.");
-    }
-}
-
+// Include the phpqrcode library
 require_once 'phpqrcode/qrlib.php';
 include '../db_connect.php';
 
-// Get student ID from URL parameter
-$studentID = $_GET['student_id'] ?? '';
+// Get parameters
+$student_id = isset($_GET['student_id']) ? $_GET['student_id'] : '';
+$display = isset($_GET['display']) ? $_GET['display'] : false;
 
-if (empty($studentID)) {
-    http_response_code(400);
-    die("Student ID is required");
-}
-
-// Verify student exists
-$student_check = "SELECT studentID FROM student WHERE studentID = ?";
-$stmt = $conn->prepare($student_check);
-$stmt->bind_param("s", $studentID);
-$stmt->execute();
-$result = $stmt->get_result();
-
-if ($result->num_rows === 0) {
-    http_response_code(404);
-    die("Student not found");
-}
-$stmt->close();
-
-// Create QR codes directory
-$qr_dir = 'qr_codes/';
-if (!is_dir($qr_dir)) {
-    if (!mkdir($qr_dir, 0755, true)) {
-        http_response_code(500);
-        die("Failed to create QR codes directory");
-    }
-}
-
-// Check if directory is writable
-if (!is_writable($qr_dir)) {
-    http_response_code(500);
-    die("QR codes directory is not writable");
-}
-
-// Generate the URL for the QR code
-$protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
-$host = $_SERVER['HTTP_HOST'];
-$current_dir = rtrim(dirname($_SERVER['PHP_SELF']), '/');
-$qr_url = $protocol . '://' . $host . $current_dir . '/student_info.php?student_id=' . urlencode($studentID);
-
-// Generate QR code file
-$qr_filename = 'student_' . $studentID . '_qr.png';
-$qr_filepath = $qr_dir . $qr_filename;
-
-// Only generate if file doesn't exist or is older than 1 hour
-if (!file_exists($qr_filepath) || (time() - filemtime($qr_filepath)) > 3600) {
-    try {
-        // Set error correction level and size
-        $errorCorrectionLevel = QR_ECLEVEL_L;
-        $pixelSize = 8;
-        $frameSize = 2;
-        
-        // Generate QR code with proper error handling
-        QRcode::png($qr_url, $qr_filepath, $errorCorrectionLevel, $pixelSize, $frameSize);
-        
-        // Verify the file was created successfully
-        if (!file_exists($qr_filepath) || filesize($qr_filepath) == 0) {
-            throw new Exception("QR code file was not created or is empty");
-        }
-        
-    } catch (Exception $e) {
-        // Log the error and provide fallback
-        error_log("QR Code generation failed: " . $e->getMessage());
-        
-        // Create a simple fallback QR code using alternative method
-        if (createSimpleQR($qr_url, $qr_filepath)) {
-            // Fallback succeeded
-        } else {
-            http_response_code(500);
-            die("Error generating QR code: " . $e->getMessage());
-        }
-    }
-}
-
-// Check if we should display the image
-if (isset($_GET['display']) && $_GET['display'] == 'true') {
-    if (file_exists($qr_filepath) && filesize($qr_filepath) > 0) {
-        header('Content-Type: image/png');
-        header('Content-Length: ' . filesize($qr_filepath));
-        header('Cache-Control: max-age=3600'); // Cache for 1 hour
-        readfile($qr_filepath);
+// Validate student_id
+if (empty($student_id)) {
+    if ($display) {
+        // Return a placeholder image or error message
+        header('Content-Type: text/html');
+        echo '<div style="padding: 20px; border: 2px solid #ddd; border-radius: 8px; background-color: #fff3cd; text-align: center;">';
+        echo '<p style="color: #856404; margin: 0;">Invalid Student ID</p>';
+        echo '</div>';
+        exit();
     } else {
-        // Return a simple "QR Not Available" image
-        header('Content-Type: image/png');
-        createNotAvailableImage();
+        die('Invalid student ID');
     }
-} else {
-    // Return JSON response with file info
-    header('Content-Type: application/json');
-    if (file_exists($qr_filepath) && filesize($qr_filepath) > 0) {
+}
+
+// Create qr_codes directory if it doesn't exist
+$qr_dir = 'qr_codes/';
+if (!file_exists($qr_dir)) {
+    mkdir($qr_dir, 0755, true);
+}
+
+// Generate the URL that the QR code will point to
+$base_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]";
+$script_dir = dirname($_SERVER['PHP_SELF']);
+$qr_url = $base_url . $script_dir . '/student_info.php?student_id=' . urlencode($student_id);
+
+// Define the QR code filename
+$qr_filename = $qr_dir . 'student_' . $student_id . '.png';
+
+try {
+    // Check if QR code already exists and is recent (less than 24 hours old)
+    $regenerate = true;
+    if (file_exists($qr_filename)) {
+        $file_age = time() - filemtime($qr_filename);
+        if ($file_age < 86400) { // 24 hours = 86400 seconds
+            $regenerate = false;
+        }
+    }
+    
+    // Generate QR code if needed
+    if ($regenerate) {
+        // QR code parameters
+        $errorCorrectionLevel = 'M'; // Error correction level (L, M, Q, H)
+        $matrixPointSize = 6; // Size of each matrix point
+        
+        // Generate QR code and save to file
+        QRcode::png($qr_url, $qr_filename, $errorCorrectionLevel, $matrixPointSize, 2);
+    }
+    
+    // Check if file was created successfully
+    if (!file_exists($qr_filename)) {
+        throw new Exception('Failed to generate QR code file');
+    }
+    
+    if ($display) {
+        // Display the QR code image
+        header('Content-Type: image/png');
+        header('Cache-Control: public, max-age=3600'); // Cache for 1 hour
+        header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT');
+        
+        // Output the image
+        readfile($qr_filename);
+        exit();
+    } else {
+        // Return success message or redirect
         echo json_encode([
             'success' => true,
-            'file_path' => $qr_filepath,
-            'url' => $qr_url,
-            'qr_image_url' => $current_dir . '/generate_qr.php?student_id=' . urlencode($studentID) . '&display=true'
+            'message' => 'QR code generated successfully',
+            'filename' => $qr_filename,
+            'url' => $qr_url
         ]);
+    }
+    
+} catch (Exception $e) {
+    // Handle errors
+    error_log('QR Code Generation Error: ' . $e->getMessage());
+    
+    if ($display) {
+        // Return error image or placeholder
+        header('Content-Type: text/html');
+        echo '<div style="padding: 20px; border: 2px solid #ddd; border-radius: 8px; background-color: #fff3cd; text-align: center;">';
+        echo '<p style="color: #856404; margin: 0; margin-bottom: 10px;">QR Code Generation Failed</p>';
+        echo '<a href="' . htmlspecialchars($qr_url) . '" target="_blank" ';
+        echo 'style="background: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">';
+        echo 'View Merit Report</a>';
+        echo '</div>';
+        exit();
     } else {
         echo json_encode([
             'success' => false,
-            'error' => 'QR code file not found',
-            'direct_url' => $qr_url
+            'error' => 'Failed to generate QR code: ' . $e->getMessage()
         ]);
     }
 }
 
-$conn->close();
-
-/**
- * Fallback function to create a simple QR code using Google Charts API
- */
-function createSimpleQR($data, $filepath) {
-    try {
-        $size = '200x200';
-        $url = 'https://chart.googleapis.com/chart?chs=' . $size . '&cht=qr&chl=' . urlencode($data);
-        
-        $context = stream_context_create([
-            'http' => [
-                'timeout' => 10,
-                'user_agent' => 'Mozilla/5.0 (compatible; QR Generator)'
-            ]
-        ]);
-        
-        $qr_data = file_get_contents($url, false, $context);
-        
-        if ($qr_data !== false) {
-            return file_put_contents($filepath, $qr_data) !== false;
-        }
-    } catch (Exception $e) {
-        error_log("Fallback QR generation failed: " . $e->getMessage());
-    }
-    
-    return false;
-}
-
-/**
- * Create a "Not Available" placeholder image
- */
-function createNotAvailableImage() {
-    $width = 200;
-    $height = 200;
-    
-    $image = imagecreatetruecolor($width, $height);
-    $white = imagecolorallocate($image, 255, 255, 255);
-    $black = imagecolorallocate($image, 0, 0, 0);
-    $gray = imagecolorallocate($image, 128, 128, 128);
-    
-    imagefill($image, 0, 0, $white);
-    imagerectangle($image, 0, 0, $width-1, $height-1, $gray);
-    
-    $text = "QR Code\nNot Available";
-    $font_size = 3;
-    
-    // Calculate text position to center it
-    $text_width = imagefontwidth($font_size) * 9; // approximate
-    $text_height = imagefontheight($font_size) * 2; // 2 lines
-    $x = ($width - $text_width) / 2;
-    $y = ($height - $text_height) / 2;
-    
-    imagestring($image, $font_size, $x, $y-10, "QR Code", $black);
-    imagestring($image, $font_size, $x-15, $y+10, "Not Available", $black);
-    
-    imagepng($image);
-    imagedestroy($image);
+// Close database connection if it was opened
+if (isset($conn)) {
+    $conn->close();
 }
 ?>
