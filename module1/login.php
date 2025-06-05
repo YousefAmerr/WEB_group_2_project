@@ -37,7 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             } elseif ($user_type === 'advisor') {
                 header("Location: ../module2/dashboardAdvisor.php");
             } elseif ($user_type === 'coordinator') {
-                header("Location: ../sidebar/Coordinator_SideBar.php");
+                header("Location: ../module3/coordinator/attendance_report.php");
             }
             exit();
         } else {
