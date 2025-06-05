@@ -31,11 +31,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             // Redirect to different dashboards
             if ($user_type === 'student') {
-                header("Location: ../sidebar/Student_SideBar.php");
+                header("Location: ../module4/dashboard.php");
             } elseif ($user_type === 'advisor') {
-                header("Location: ../sidebar/Advisor_SideBar.php");
+                header("Location: ../module2/dashboardAdvisor.php");
             } elseif ($user_type === 'coordinator') {
-                header("Location: ../sidebar/Coordinator_SideBar.php");
+                header("Location: ../module3/coordinator/attendance_report.php");
             }
             exit();
         } else {
