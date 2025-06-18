@@ -130,8 +130,8 @@ calculateParticipantMerits();
                         <p><strong>Role:</strong> <?php echo $roleDisplay; ?></p>
                         <div class="sections_border_space">
                         <span class="merit-score"><strong>Score:</strong> <?php echo $merit['meritPoints']; ?></span>
+                        </div>
                     </div>
-                </div>
                 </div>
                 <?php
             }
@@ -139,7 +139,7 @@ calculateParticipantMerits();
             echo '<div class="no-events"><p>No merit awards found.</p></div>';
         }
         ?> 
-      </div>
+        </div>
     </div>
 
     <div class="summary-container">
@@ -156,53 +156,84 @@ calculateParticipantMerits();
 
 
       <!-- QR Code Section -->
-      <div class="summary-right">
-          <h3>Scan for Complete Merit Report</h3>
-          <div class="qr_box">
-              <?php
-              $qr_image_path = "generate_qr.php?student_id=" . urlencode($studentID) . "&display=true";
-              $direct_link = "student_info.php?student_id=" . urlencode($studentID);
-              ?>
-              <div style="text-align: center; padding: 20px;">
-                  <div id="qr-container-<?php echo $studentID; ?>">
-                      <img id="qr-image-<?php echo $studentID; ?>" 
-                           src="<?php echo $qr_image_path; ?>" 
-                           alt="QR Code for Student Merit Report" 
-                           style="max-width: 200px; max-height: 200px; border: 2px solid #ddd; border-radius: 8px;"
-                           onload="handleQRLoad('<?php echo $studentID; ?>')"
-                           onerror="handleQRError('<?php echo $studentID; ?>', '<?php echo $direct_link; ?>')">
-                  </div>
-                  
-                  <div id="qr-loading-<?php echo $studentID; ?>" style="display: none; padding: 20px; border: 2px solid #ddd; border-radius: 8px; background-color: #f0f8ff;">
-                      <p style="color: #666; margin: 0;">Generating QR Code...</p>
-                  </div>
-                  
-                  <div id="qr-error-<?php echo $studentID; ?>" style="display: none; padding: 20px; border: 2px solid #ddd; border-radius: 8px; background-color: #fff3cd;">
-                      <p style="color: #856404; margin: 0; margin-bottom: 10px;">QR Code temporarily unavailable</p>
-                      <a href="<?php echo $direct_link; ?>" target="_blank" 
-                         style="background: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">
-                          View Merit Report
-                      </a>
-                  </div>
-                  
-                  <p style="margin-top: 10px; font-size: 14px; color: #666;">
-                      Scan this QR code to view your complete merit report
-                  </p>
-                  
-                  <div style="margin-top: 2px; padding-top: 5px; border-top: 1px solid #eee;">
-                      <p style="margin-bottom: 3px; font-size: 12px; color: #888;">Alternative Access:</p>
-                      <a href="<?php echo $direct_link; ?>" target="_blank" 
-                         style="font-size: 12px; color: #007bff; text-decoration: none; margin-right: 5px;">
-                          📱 Direct Link
-                      </a>
-                  </div>
-              </div>
-          </div>
-      </div>
+    <div class="summary-right">
+        <h3>Scan for Complete Merit Report</h3>
+        <div class="qr_box">
+            <?php
+            // Ensure $studentID is defined and set to a valid value
+            $studentID = isset($studentID) ? $studentID : null;
+            if ($studentID === null) {
+                echo "Error: Student ID is not set.";
+                return;
+            }
+
+            $qr_image_path = "generate_qr.php?student_id=" . urlencode($studentID) . "&display=true";
+            $direct_link = "student_info.php?student_id=" . urlencode($studentID);
+            ?>
+            <div style="text-align: center; padding: 20px;">
+                <div id="qr-container-<?php echo $studentID; ?>">
+                    <img id="qr-image-<?php echo $studentID; ?>"
+                        src="<?php echo $qr_image_path; ?>"
+                        alt="QR Code for Student Merit Report"
+                        style="max-width: 200px; max-height: 200px; border: 2px solid #ddd; border-radius: 8px;"
+                        onload="handleQRLoad('<?php echo $studentID; ?>')"
+                        onerror="handleQRError('<?php echo $studentID; ?>', '<?php echo $direct_link; ?>')">
+                </div>
+
+            <div id="qr-loading-<?php echo $studentID; ?>" style="display: none; padding: 20px; border: 2px solid #ddd; border-radius: 8px; background-color: #f0f8ff;">
+                <p style="color: #666; margin: 0;">Generating QR Code...</p>
+            </div>
+
+            <div id="qr-error-<?php echo $studentID; ?>" style="display: none; padding: 20px; border: 2px solid #ddd; border-radius: 8px; background-color: #fff3cd;">
+                <p style="color: #856404; margin: 0; margin-bottom: 10px;">QR Code temporarily unavailable</p>
+                <a href="<?php echo $direct_link; ?>" target="_blank"
+                   style="background: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block;">
+                    View Merit Report
+                </a>
+            </div>
+
+            <p style="margin-top: 10px; font-size: 14px; color: #666;">
+                Scan this QR code to view your complete merit report
+            </p>
+
+            <div style="margin-top: 2px; padding-top: 5px; border-top: 1px solid #eee;">
+                <p style="margin-bottom: 3px; font-size: 12px; color: #888;">Alternative Access:</p>
+                <a href="<?php echo $direct_link; ?>" target="_blank"
+                   style="font-size: 12px; color: #007bff; text-decoration: none; margin-right: 5px;">
+                    📱 Direct Link
+                </a>
+            </div>
+        </div>
+    </div>
+    </div>
     </div>
 </div>
+<script>
+function handleQRLoad(studentId) {
+    // QR code loaded successfully
+    console.log('QR code loaded for student:', studentId);
+}
 
-  </div>
+function handleQRError(studentId, directLink) {
+    console.log('QR code failed to load for student:', studentId);
+    document.getElementById('qr-container-' + studentId).style.display = 'none';
+    document.getElementById('qr-error-' + studentId).style.display = 'block';
+}
+
+// Auto-refresh QR code if it fails to load initially
+document.addEventListener('DOMContentLoaded', function() {
+    const qrImages = document.querySelectorAll('img[id^="qr-image-"]');
+    qrImages.forEach(function(img) {
+        img.addEventListener('error', function() {
+            // Retry loading QR code after 2 seconds
+            setTimeout(function() {
+                const currentSrc = img.src;
+                img.src = currentSrc + (currentSrc.includes('?') ? '&' : '?') + 'retry=' + Date.now();
+            }, 2000);
+        });
+    });
+});
+</script>
 </body>
 </html>
 <?php

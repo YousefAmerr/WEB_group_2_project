@@ -57,7 +57,7 @@ body {
 }
 
 .nav-item {
-    padding: 10px 20px;
+    padding: 30px 20px;
     display: flex;
     align-items: center;
     cursor: pointer;

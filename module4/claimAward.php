@@ -103,8 +103,8 @@ if ($_POST['action'] ?? false) {
             echo "<script>alert('Claim not found.');</script>";
         } else {
             $claim = $result->fetch_assoc();
-            if ($claim['status'] == 'Approved') {
-                echo "<script>alert('Cannot update approved claims!');</script>";
+            if ($claim['status'] == 'Approved' || $claim['status'] == 'Rejected') {
+                echo "<script>alert('Cannot update approved or rejected claims!');</script>";
             } else {
                 $supportDoc = $_POST['current_support_doc'] ?? '';
                 
@@ -135,7 +135,7 @@ if ($_POST['action'] ?? false) {
         
         if ($result->num_rows > 0) {
             $claim = $result->fetch_assoc();
-            if ($claim['status'] != 'Approved') {
+            if ($claim['status'] != 'Approved' && $claim['status'] != 'Rejected') {
                 if ($claim['supporingDoc'] && file_exists("uploads/meritclaim/" . $claim['supporingDoc'])) {
                     unlink("uploads/meritclaim/" . $claim['supporingDoc']);
                 }
@@ -200,6 +200,8 @@ $all_events = getEvents($conn, $studentID, false);
                         while ($claim = $claims_result->fetch_assoc()) {
                             $statusClass = 'status-' . strtolower($claim['status']);
                             $isApproved = $claim['status'] == 'Approved';
+                            $isRejected = $claim['status'] == 'Rejected';
+                            $isDisabled = $isApproved || $isRejected;
                             $updateBtn = $isApproved ? "disabled" : "onclick='openUpdateModal(" . htmlspecialchars(json_encode($claim)) . ")'";
                             $deleteBtn = $isApproved ? "disabled" : "onclick='deleteClaim(" . $claim['claim_id'] . ")'";
                             $docLink = $claim['supporingDoc'] ? "<a href='uploads/meritclaim/" . htmlspecialchars($claim['supporingDoc']) . "' target='_blank' class='doc-link'>" . htmlspecialchars($claim['supporingDoc']) . "</a>" : "None";
@@ -220,8 +222,8 @@ $all_events = getEvents($conn, $studentID, false);
                                     </div>
                                     <div class='claim-actions'>
                                         <div class='claim-buttons'>
-                                            <button class='btn-update" . ($isApproved ? ' disabled' : '') . "' $updateBtn " . ($isApproved ? 'disabled' : '') . ">Update</button>
-                                            <button class='btn-delete" . ($isApproved ? ' disabled' : '') . "' $deleteBtn " . ($isApproved ? 'disabled' : '') . ">Delete</button>
+                                            <button class='btn-update" . ($isDisabled ? ' disabled' : '') . "' $updateBtn " . ($isDisabled ? 'disabled' : '') . ">Update</button>
+                                            <button class='btn-delete" . ($isDisabled ? ' disabled' : '') . "' $deleteBtn " . ($isDisabled ? 'disabled' : '') . ">Delete</button>
                                         </div>
                                         <div class='status-section'>
                                             <span class='status-label'>Claim Status:</span>
@@ -239,10 +241,10 @@ $all_events = getEvents($conn, $studentID, false);
                 </div>
             </div>
         </div>
-    </div>
+    
 
-    <!-- Modal -->
-    <div id="claimModal" class="modal">
+        <!-- Modal -->
+     <div id="claimModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modalTitle">Add New Merit Claim</h2>
@@ -283,7 +285,7 @@ $all_events = getEvents($conn, $studentID, false);
             </form>
         </div>
     </div>
-
+</div>
     <script>
         const availableEvents = <?php echo json_encode($available_events); ?>;
         const allEvents = <?php echo json_encode($all_events); ?>;
