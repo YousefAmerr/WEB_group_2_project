@@ -1,0 +1,171 @@
+<?php
+// DB connection
+$host = 'localhost';
+$user = 'root';
+$pass = '';
+$db = 'mypetakom';
+$port = 3306;
+
+$conn = new mysqli($host, $user, $pass, $db, $port);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+$message = "";
+
+// Check meritApplicationID is passed
+if (!isset($_GET['meritApplicationID'])) {
+    die("No merit application ID specified.");
+}
+
+$meritApplicationID = $_GET['meritApplicationID'];
+
+// Fetch data for dropdowns
+$events = $conn->query("SELECT eventID, eventName FROM event");
+$students = $conn->query("SELECT studentID, studentName FROM student");
+$coordinators = $conn->query("SELECT coordinatorID, coordinatorName FROM petakomcoordinator");
+
+// Fetch existing merit application data to pre-fill the form
+$stmt = $conn->prepare("SELECT * FROM meritapplication WHERE meritApplicationID = ?");
+$stmt->bind_param("s", $meritApplicationID);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
+    die("Merit application not found.");
+}
+
+$application = $result->fetch_assoc();
+
+// Handle form submission
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $studentID = $_POST['studentID'] ?? '';
+    $coordinatorID = $_POST['coordinatorID'] ?? '';
+    $eventID = $_POST['eventID'] ?? '';
+    $status = $_POST['status'] ?? '';
+    $role_type = $_POST['role_type'] ?? '';
+
+    if ($studentID && $coordinatorID && $eventID && $status && $role_type) {
+        $updateStmt = $conn->prepare("UPDATE meritapplication SET studentID = ?, coordinatorID = ?, eventID = ?, status = ?, role_type = ? WHERE meritApplicationID = ?");
+        $updateStmt->bind_param("ssssss", $studentID, $coordinatorID, $eventID, $status, $role_type, $meritApplicationID);
+
+        if ($updateStmt->execute()) {
+            $message = "Merit application updated successfully.";
+            
+            // Refresh application data after update
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $application = $result->fetch_assoc();
+        } else {
+            $message = "Error updating merit application: " . $conn->error;
+        }
+        $updateStmt->close();
+    } else {
+        $message = "Please fill in all required fields.";
+    }
+}
+
+$stmt->close();
+$conn->close();
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="Basyirah" content="Web Engineering Project - Event Advisor Dashboard">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Update Merit Application - MyPetakom</title>
+    <link rel="stylesheet" href="style/eventadvisor.css">
+</head>
+<body>
+    <div class="top-heading-container">
+        MyPetakom - Event Advisor
+    </div>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <img src="TestImages/UMP-Logo.jpg" alt="UMP Logo">
+            </div>
+            <img src="TestImages/user.png" alt="Profile Picture">
+            <h2>Event Advisor</h2>
+            <a href="eventadvisorprofile.php">Profile</a>
+            <a href="dashboardeventadvisor.php">Dashboard</a>
+            <a href="event.php">Events</a>
+            <a href="meriteventadvisor.php">Merit</a>
+            <a href="committee.php">Committee</a>
+            <a href="attendanceeventadvisor.php">Attendance</a>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="header">
+                <div class="header-left">
+                    <h1>Update Merit Application</h1>
+                </div>
+                <a href="signouteventadvisor.php" class="signout-btn">SIGN OUT</a>
+            </div>
+
+            <section class="committee">
+                <?php if (!empty($message)): ?>
+                    <script>
+                        alert("<?php echo addslashes($message); ?>");
+                    </script>
+                <?php endif; ?>
+
+                <form method="post" action="">
+                    <label for="studentID">Student Name:</label><br />
+                    <select name="studentID" id="studentID" required>
+                        <option value="">-- Select Student --</option>
+                        <?php foreach ($students as $row): ?>
+                            <option value="<?php echo htmlspecialchars($row['studentID']); ?>" <?php if ($application['studentID'] == $row['studentID']) echo 'selected'; ?>>
+                                <?php echo htmlspecialchars($row['studentName']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select><br /><br />
+                    
+                    <label for="coordinatorID">Coordinator Name:</label><br />
+                    <select name="coordinatorID" id="coordinatorID" required>
+                        <option value="">-- Select Coordinator --</option>
+                        <?php foreach ($coordinators as $row): ?>
+                            <option value="<?php echo htmlspecialchars($row['coordinatorID']); ?>" <?php if ($application['coordinatorID'] == $row['coordinatorID']) echo 'selected'; ?>>
+                                <?php echo htmlspecialchars($row['coordinatorName']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select><br /><br />
+                    
+                    <label for="eventID">Event Name:</label><br />
+                    <select name="eventID" id="eventID" required>
+                        <option value="">-- Select Event --</option>
+                        <?php foreach ($events as $row): ?>
+                            <option value="<?php echo htmlspecialchars($row['eventID']); ?>" <?php if ($application['eventID'] == $row['eventID']) echo 'selected'; ?>>
+                                <?php echo htmlspecialchars($row['eventName']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select><br /><br />
+                    
+                    <label for="status">Status:</label><br />
+                    <select name="status" id="status" required>
+                        <option value="">-- Select Status --</option>
+                        <option value="Pending" <?php if ($application['status'] == 'Pending') echo 'selected'; ?>>Pending</option>
+                        <option value="Approved" <?php if ($application['status'] == 'Approved') echo 'selected'; ?>>Approved</option>
+                        <option value="Rejected" <?php if ($application['status'] == 'Rejected') echo 'selected'; ?>>Rejected</option>
+                    </select><br /><br />
+                    
+                    <label for="role_type">Role Type:</label><br />
+                    <select name="role_type" id="role_type" required>
+                        <option value="">-- Select Role Type --</option>
+                        <option value="committee" <?php if ($application['role_type'] == 'committee') echo 'selected'; ?>>Committee</option>
+                        <option value="main-committee" <?php if ($application['role_type'] == 'main-committee') echo 'selected'; ?>>Main Committee</option>
+                    </select><br /><br />
+
+                    <button type="submit" class="button">Update</button>
+                    <a href="committee.php" class="button">Back</a>
+                </form>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
