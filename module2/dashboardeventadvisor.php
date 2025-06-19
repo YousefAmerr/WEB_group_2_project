@@ -4,7 +4,6 @@ session_start();
 
 include '../db_connect.php';
 //Database connection settings
-include '../db_connect.php';
 
 // Upcoming Events
 $eventSql = "SELECT eventName, eventLocation, eventLevel FROM event ORDER BY eventName ASC";
