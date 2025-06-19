@@ -41,7 +41,6 @@ while ($row = $levelResult->fetch_assoc()) {
    
 <?php include '../sideBar/Advisor_SideBar.php'; ?>
 
-<?php include "../sideBar/Advisor_SideBar.php";?>
 
     <div class="container">
         
