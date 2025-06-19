@@ -27,14 +27,14 @@ $stmt->close();
 if ($_POST && isset($_POST['action']) && isset($_POST['claim_id'])) {
     $claim_id = $_POST['claim_id'];
     $action = $_POST['action'];
-    
+
     if ($action === 'approve' || $action === 'reject') {
         $new_status = ($action === 'approve') ? 'Approved' : 'Rejected';
 
         $update_sql = "UPDATE meritclaim SET status = ? WHERE claim_id = ?";
         $update_stmt = $conn->prepare($update_sql);
         $update_stmt->bind_param("si", $new_status, $claim_id);
-        
+
         if ($update_stmt->execute()) {
             $message = "Claim has been " . strtolower($new_status) . " successfully.";
             $message_type = "success";
@@ -54,6 +54,7 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -61,6 +62,7 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     <link rel="stylesheet" href="css/advisor.css" />
 </head>
+
 <body>
     <div class="main-content">
         <h1 class="page_title">Student Merit Claims Review</h1>
@@ -140,31 +142,31 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                         JOIN student s ON mc.studentID = s.studentID
                         LEFT JOIN event e ON mc.eventID = e.eventID
                         WHERE 1=1";
-                
+
                 $params = [];
                 $types = "";
-                
+
                 if (!empty($statusFilter)) {
                     $sql .= " AND mc.status = ?";
                     $params[] = $statusFilter;
                     $types .= "s";
                 }
-                
+
                 if (!empty($studentFilter)) {
                     $sql .= " AND mc.studentID = ?";
                     $params[] = $studentFilter;
                     $types .= "s";
                 }
-                
+
                 $sql .= " ORDER BY mc.claim_date DESC";
-                
+
                 $stmt = $conn->prepare($sql);
                 if (!empty($params)) {
                     $stmt->bind_param($types, ...$params);
                 }
                 $stmt->execute();
                 $result = $stmt->get_result();
-                
+
                 if ($result->num_rows === 0) {
                     echo '<div class="no-claims">
                             <i class="material-icons">assignment</i>
@@ -181,9 +183,9 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                         $status = $row['status'];
                         $claimDate = date('M d, Y H:i', strtotime($row['claim_date']));
                         $supportDoc = $row['supporingDoc'];
-                        
+
                         $statusClass = 'status-' . strtolower($status);
-                        
+
                         echo "
                         <div class='claim-card'>
                             <div class='claim-header'>
@@ -218,14 +220,14 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                             </div>
                             
                             <div class='claim-actions'>";
-                        
+
                         if (!empty($supportDoc)) {
                             echo "<button class='btn btn-view' onclick='viewDocument(\"{$supportDoc}\", {$claimId})'>
                                     <i class='material-icons'>visibility</i>
                                     View Document
                                   </button>";
                         }
-                        
+
                         // Action buttons only for pending claims
                         if ($status === 'Pending') {
                             echo "<form method='POST' style='display: inline;' onsubmit='return confirmAction(\"approve\")'>
@@ -246,7 +248,7 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                                     </button>
                                   </form>";
                         }
-                        
+
                         echo "    </div>
                         </div>";
                     }
@@ -272,7 +274,16 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                     <p>Review the supporting document for this merit claim.</p>
                 </div>
                 <div id="documentContainer">
-                    <img id="documentImage" class="document-preview" style="display: none;" />
+                    <img id="documentImage" class="document-preview" style="display: none; max-width: 100%; height: auto;" />
+                    <iframe id="documentPdf" class="document-preview" style="display: none; width: 100%; height: 600px; border: none;" frameborder="0"></iframe>
+                    <div id="documentDownload" style="display: none; text-align: center; padding: 20px;">
+                        <i class="material-icons" style="font-size: 48px; color: #007bff;">description</i>
+                        <p>This document cannot be previewed in the browser.</p>
+                        <a id="downloadLink" href="#" target="_blank" class="btn btn-primary">
+                            <i class="material-icons">download</i>
+                            Download Document
+                        </a>
+                    </div>
                     <div id="documentError" style="display: none; text-align: center; color: #dc3545;">
                         <i class="material-icons" style="font-size: 48px;">error</i>
                         <p>Unable to load document</p>
@@ -292,24 +303,68 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
             const modal = document.getElementById('documentModal');
             const modalClaimId = document.getElementById('modalClaimId');
             const documentImage = document.getElementById('documentImage');
+            const documentPdf = document.getElementById('documentPdf');
+            const documentDownload = document.getElementById('documentDownload');
+            const downloadLink = document.getElementById('downloadLink');
             const documentError = document.getElementById('documentError');
-            
+
             modalClaimId.textContent = claimId;
-            
+
+            // Hide all elements initially
             documentImage.style.display = 'none';
+            documentPdf.style.display = 'none';
+            documentDownload.style.display = 'none';
             documentError.style.display = 'none';
-            
-            documentImage.onload = function() {
-                documentImage.style.display = 'block';
-            };
-            
-            documentImage.onerror = function() {
+
+            // Get file extension
+            const fileExtension = filename.toLowerCase().split('.').pop();
+            const filePath = 'uploads/meritclaim/' + filename;
+
+            // Handle different file types
+            if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
+                // Handle images
+                documentImage.onload = function() {
+                    documentImage.style.display = 'block';
+                };
+
+                documentImage.onerror = function() {
+                    documentError.style.display = 'block';
+                };
+
+                documentImage.src = filePath;
+            } else if (fileExtension === 'pdf') {
+                // Handle PDFs
+                let pdfLoaded = false;
+
+                // Set a timeout to show error if PDF doesn't load
+                const pdfTimeout = setTimeout(() => {
+                    if (!pdfLoaded) {
+                        documentError.style.display = 'block';
+                    }
+                }, 5000); // 5 second timeout
+
+                documentPdf.onload = function() {
+                    pdfLoaded = true;
+                    clearTimeout(pdfTimeout);
+                    documentPdf.style.display = 'block';
+                };
+
+                documentPdf.src = filePath;
+
+                // Immediately show the PDF iframe (it will load the PDF)
+                documentPdf.style.display = 'block';
+
+            } else if (['doc', 'docx'].includes(fileExtension)) {
+                // Handle Word documents - show download option
+                downloadLink.href = filePath;
+                downloadLink.download = filename;
+                documentDownload.style.display = 'block';
+
+            } else {
+                // Unknown file type
                 documentError.style.display = 'block';
-            };
-            
-            // Fix the path - use forward slash and correct relative path
-            documentImage.src = 'uploads/meritclaim/' + filename;
-            
+            }
+
             modal.style.display = 'block';
         }
 
@@ -324,10 +379,9 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                 modal.style.display = 'none';
             }
         }
-
-        
     </script>
 </body>
+
 </html>
 
 <?php

@@ -1,9 +1,10 @@
 <?php
- 
- require_once '../db_connect.php'; 
+
+require_once '../db_connect.php';
 
 // Define merit points by event level and role type
-function getMeritPoints($eventLevel, $role_type) {
+function getMeritPoints($eventLevel, $role_type)
+{
 
     $level = strtoupper(trim($eventLevel));
 
@@ -23,9 +24,10 @@ function getMeritPoints($eventLevel, $role_type) {
     return 0;
 }
 
-function calculate_Committee_Main_Committee_Merits() {
+function calculate_Committee_Main_Committee_Merits()
+{
     global $conn;
-    
+
     if (!$conn || $conn->connect_error) {
         die("Database connection failed: " . $conn->connect_error);
     }
@@ -40,25 +42,25 @@ function calculate_Committee_Main_Committee_Merits() {
         AND ma.role_type IN ('committee', 'main-committee')
         AND mw.ma_ID IS NULL
     ";
-    
+
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
         die("Database error: " . $conn->error);
     }
-    
+
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     $processed = 0;
     while ($row = $result->fetch_assoc()) {
         $studentID = (int)$row['studentID'];
         $eventID = (int)$row['eventID'];
         $roleType = $row['role_type'];
         $eventLevel = $row['eventLevel'];
-        
+
         // Calculate points
         $points = getMeritPoints($eventLevel, $roleType);
-        
+
         // Store in meritaward table
         storeOrUpdateMeritAwardMySQLi($conn, $studentID, $eventID, $points);
         $processed++;
@@ -70,28 +72,59 @@ function calculate_Committee_Main_Committee_Merits() {
 
 
 // Helper function to store or update merit award using MySQLi (fixed version)
-function storeOrUpdateMeritAwardMySQLi($conn, $studentID, $eventID, $points) {
-   
-    $insertSql = "INSERT INTO meritaward (studentID, eventID, meritPoints) VALUES (?, ?, ?)";
-    $insertStmt = $conn->prepare($insertSql);
-    
-    if (!$insertStmt) {
-        die("Database error (insert): " . $conn->error);
+function storeOrUpdateMeritAwardMySQLi($conn, $studentID, $eventID, $points)
+{
+    // First check if record already exists
+    $checkSql = "SELECT ma_ID FROM meritaward WHERE studentID = ? AND eventID = ?";
+    $checkStmt = $conn->prepare($checkSql);
+
+    if (!$checkStmt) {
+        die("Database error (check): " . $conn->error);
     }
-    
-    $insertStmt->bind_param("iii", $studentID, $eventID, $points);
-    $insertStmt->execute();
-    $insertStmt->close();
+
+    $checkStmt->bind_param("ii", $studentID, $eventID);
+    $checkStmt->execute();
+    $result = $checkStmt->get_result();
+
+    if ($result->num_rows > 0) {
+        // Record exists, update it
+        $checkStmt->close();
+        $updateSql = "UPDATE meritaward SET meritPoints = ? WHERE studentID = ? AND eventID = ?";
+        $updateStmt = $conn->prepare($updateSql);
+
+        if (!$updateStmt) {
+            die("Database error (update): " . $conn->error);
+        }
+
+        $updateStmt->bind_param("iii", $points, $studentID, $eventID);
+        $updateStmt->execute();
+        $updateStmt->close();
+    } else {
+        // Record doesn't exist, insert new one
+        $checkStmt->close();
+        $insertSql = "INSERT INTO meritaward (studentID, eventID, meritPoints) VALUES (?, ?, ?)";
+        $insertStmt = $conn->prepare($insertSql);
+
+        if (!$insertStmt) {
+            die("Database error (insert): " . $conn->error);
+        }
+
+        $insertStmt->bind_param("iii", $studentID, $eventID, $points);
+        $insertStmt->execute();
+        $insertStmt->close();
+    }
 }
 
 
-function calculateParticipantMerits() {
+function calculateParticipantMerits()
+{
     global $conn;
-    
+
     if (!$conn || $conn->connect_error) {
         die("Database connection failed: " . $conn->connect_error);
     }
 
+    // Get students who attended events but don't have merit awards yet
     // and don't have approved committee or main-committee roles
     $sql = "
         SELECT DISTINCT 
@@ -111,24 +144,24 @@ function calculateParticipantMerits() {
             AND mw.ma_ID IS NULL
             AND ma.studentID IS NULL
     ";
-    
+
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
         die("Database error: " . $conn->error);
     }
-    
+
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     $processed = 0;
     while ($row = $result->fetch_assoc()) {
         $studentID = (int)$row['studentID'];
         $eventID = (int)$row['eventID'];
         $eventLevel = $row['eventLevel'];
-        
+
         // Calculate points for participant
         $points = getMeritPoints($eventLevel, 'participant');
-        
+
         // Store in meritaward table
         storeOrUpdateMeritAwardMySQLi($conn, $studentID, $eventID, $points);
         $processed++;
@@ -140,41 +173,39 @@ function calculateParticipantMerits() {
 
 
 
-function getSemester2EventCount($studentID) {
+function getSemester2EventCount($studentID)
+{
     global $conn;
-    
+
     $sql = "SELECT COUNT(DISTINCT ma.eventID) as total_events 
             FROM meritaward ma 
             JOIN event e ON ma.eventID = e.eventID 
             WHERE e.semester = '2' AND ma.studentID = ?";
-    
+
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $studentID);
     $stmt->execute();
     $result = $stmt->get_result()->fetch_assoc();
     $stmt->close();
-    
+
     return $result['total_events'] ?? 0;
 }
 
 // Get semester 2 merit total
-function getSemester2MeritTotal($studentID) {
+function getSemester2MeritTotal($studentID)
+{
     global $conn;
-    
+
     $sql = "SELECT SUM(ma.meritPoints) as total_merits 
             FROM meritaward ma 
             JOIN event e ON ma.eventID = e.eventID 
             WHERE e.semester = '2' AND ma.studentID = ?";
-    
+
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $studentID);
     $stmt->execute();
     $result = $stmt->get_result()->fetch_assoc();
     $stmt->close();
-    
+
     return $result['total_merits'] ?? 0;
 }
-
-
-
-?>

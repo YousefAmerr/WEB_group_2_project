@@ -1,15 +1,8 @@
 <?php
-//Database connection settings
-$host = 'localhost';
-$user = 'root';
-$pass = '';
-$db = 'mypetakom';
-$port = 3306;
+session_start();
 
-$conn = new mysqli($host, $user, $pass, $db, $port);
-if ($conn->connect_error){
-    die("Connection failed: " .$conn->connect_error);
-}
+
+include '../db_connect.php';
 
 // Upcoming Events
 $eventSql = "SELECT eventName, eventLocation, eventLevel FROM event ORDER BY eventName ASC";
@@ -44,27 +37,11 @@ while ($row = $levelResult->fetch_assoc()) {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <!-- Top Header -->
-    <div class="top-heading-container">
-        MyPetakom - Event Advisor
-    </div>
+   
+<?php include '../sideBar/Advisor_SideBar.php'; ?>
 
     <div class="container">
-        <div class="sidebar">
-            <!-- PETAKOM Logo -->
-            <div class="logo">
-                <img src="TestImages/petakom.png" alt="PETAKOM Logo">
-            </div>
-            <!-- Profile Picture -->
-            <img src="TestImages/user.png" alt="Profile Picture">
-            <h2>Event Advisor</h2>
-            <a href="eventadvisorprofile.php">Profile</a>
-            <a href="dashboardeventadvisor.php">Dashboard</a>
-            <a href="event.php">Events</a>
-            <a href="meriteventadvisor.php">Merit</a>
-            <a href="committee.php">Committee</a>
-            <a href="graph.php">Attendance</a>
-        </div>
+        
 
         <main class="main-content">
             <div class="header">
