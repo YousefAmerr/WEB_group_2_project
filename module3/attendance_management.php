@@ -2,15 +2,6 @@
 session_start();
 require_once 'config.php';
 
-// Check advisor login
-if (!isset($_SESSION['adUsername']) || $_SESSION['user_type'] !== 'advisor') {
-    header("Location: index.php");
-    exit();
-}
-
-$advisorID = $_SESSION['advisorID'];
-$success = "";
-$error = "";
 
 // Handle form submissions
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
