@@ -1,0 +1,70 @@
+/* Base page layout */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f0f2f5;
+    display: flex;
+}
+
+/* Sidebar container */
+.sidebar {
+    width: 250px;
+    background-color: #1c2b5a;
+    color: white;
+    height: 100vh;
+    padding: 20px;
+    position: fixed;
+}
+
+/* Sidebar header (with icon and role label) */
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.sidebar-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.sidebar-header h2 {
+    font-size: 20px;
+    margin: 0;
+    color: #ffffff;
+}
+
+/* Sidebar menu list */
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 10px;
+}
+
+.sidebar ul li {
+    margin: 18px 0;
+}
+
+.sidebar ul li a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 10px;
+    display: block;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+.sidebar ul li a:hover {
+    background-color: #2e3b76;
+}
+
+/* Main content area beside sidebar */
+.main-content {
+    margin-left: 270px;
+    padding: 30px;
+    width: 100%;
+}
