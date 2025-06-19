@@ -1,17 +1,7 @@
 <?php
 session_start();
 
-// Database connection
-$host = 'localhost';
-$user = 'root';
-$pass = '';
-$db = 'mypetakom';
-$port = 3306;
-
-$conn = new mysqli($host, $user, $pass, $db, $port);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+include '../db_connect.php';
 
 // Handle AJAX Approve/Reject
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'], $_POST['action'])) {
@@ -87,7 +77,7 @@ $result = $conn->query($sql);
     <meta charset="UTF-8">
     <meta name="Basyirah" content="Web Engineering Project - Admin Merit Approval">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style/admin.css">
+    <link rel="stylesheet" href="../module2/meritadmin.css">
     <title>MyPetakom - Approve Merit</title>
    
     <script>
@@ -127,26 +117,13 @@ $result = $conn->query($sql);
     </script>
 </head>
 <body>
-    <div class="top-heading-container">MyPetakom - Admin</div>
-
-    <div class="container">
-        <div class="sidebar">
-            <div class="logo">
-                <img src="TestImages/UMP-Logo.jpg" alt="UMP Logo">
-            </div>
-            <img src="TestImages/user.png" alt="Profile Picture">
-            <h2>Admin</h2>
-            <a href="dashboardadmin.php">Dashboard</a>
-            <a href="userprofile.php">User Profile</a>
-            <a href="meritadmin.php">Merit</a>
-        </div>
+<?php include "../sideBar/Coordinator_SideBar.php";?>
 
         <main class="main-content">
             <div class="header">
                 <div class="header-left">
                     <h1>Pending Merit Applications</h1>
                 </div>
-                <a href="signout.php" class="signout-btn">SIGN OUT</a>
             </div>
 
             <section class="merit">

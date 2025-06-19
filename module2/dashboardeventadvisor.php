@@ -1,15 +1,6 @@
 <?php
 //Database connection settings
-$host = 'localhost';
-$user = 'root';
-$pass = '';
-$db = 'mypetakom';
-$port = 3306;
-
-$conn = new mysqli($host, $user, $pass, $db, $port);
-if ($conn->connect_error){
-    die("Connection failed: " .$conn->connect_error);
-}
+include '../db_connect.php';
 
 // Upcoming Events
 $eventSql = "SELECT eventName, eventLocation, eventLevel FROM event ORDER BY eventName ASC";
@@ -38,40 +29,23 @@ while ($row = $levelResult->fetch_assoc()) {
     <meta charset="UTF-8">
     <meta name="Jaclina" content="Web Engineering Project- Student Dashboard">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style/eventadvisor.css">
+    <link rel="stylesheet" href="../module2/dashboardeventadvisor.css">
     <title>MyPetakom - Event Advisor Dashboard</title>
     <!-- Add Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <!-- Top Header -->
-    <div class="top-heading-container">
-        MyPetakom - Event Advisor
-    </div>
+
+<?php include "../sideBar/Advisor_SideBar.php";?>
 
     <div class="container">
-        <div class="sidebar">
-            <!-- PETAKOM Logo -->
-            <div class="logo">
-                <img src="TestImages/petakom.png" alt="PETAKOM Logo">
-            </div>
-            <!-- Profile Picture -->
-            <img src="TestImages/user.png" alt="Profile Picture">
-            <h2>Event Advisor</h2>
-            <a href="eventadvisorprofile.php">Profile</a>
-            <a href="dashboardeventadvisor.php">Dashboard</a>
-            <a href="event.php">Events</a>
-            <a href="meriteventadvisor.php">Merit</a>
-            <a href="committee.php">Committee</a>
-            <a href="graph.php">Attendance</a>
-        </div>
-
+        
         <main class="main-content">
             <div class="header">
                 <div class="header-left">
-                    <h1>Welcome</h1>
+                    <h1>Event Reports</h1>
                 </div>
-                <a href="signout.php" class="signout-btn">SIGN OUT</a>
+              
             </div>
 
             <!-- Stats Section -->
@@ -90,7 +64,7 @@ while ($row = $levelResult->fetch_assoc()) {
             <!-- Events Section -->
             <section class="upcoming-events">
                 <div class="events-header">
-                    <h2 class="h2">Events</h2>
+                    <h2 class="h2">All Event</h2>
                 </div>
                 <table>
                     <thead>

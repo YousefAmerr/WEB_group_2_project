@@ -1,0 +1,97 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f4f6f8;
+    color: #333;
+    padding: 20px;
+}
+
+/* Main Content Container */
+.main-content {
+    max-width: 700px;
+    margin: auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Header */
+.header {
+    border-bottom: 2px solid #ddd;
+    margin-bottom: 25px;
+}
+
+.header-left h1 {
+    font-size: 28px;
+    color: #2c3e50;
+}
+
+/* Form Section */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+form label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #34495e;
+}
+
+form select {
+    padding: 8px 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: #fff;
+    transition: border 0.3s ease;
+}
+
+form select:focus {
+    border-color: #3498db;
+    outline: none;
+}
+
+/* Buttons */
+form button {
+    padding: 10px 20px;
+    margin-right: 10px;
+    background-color: #3498db;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+form button[type="button"] {
+    background-color: #7f8c8d;
+}
+
+form button:hover {
+    background-color: #2980b9;
+}
+
+form button[type="button"]:hover {
+    background-color: #5d6d7e;
+}
+
+/* Feedback Message */
+.message {
+    background-color: #eafaf1;
+    color: #27ae60;
+    border: 1px solid #2ecc71;
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    font-weight: bold;
+}

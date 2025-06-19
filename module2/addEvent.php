@@ -1,15 +1,6 @@
 <?php
 // DB connection
-$host = 'localhost';
-$user = 'root';
-$pass = '';
-$db = 'mypetakom'; // Changed from mypetakom_portal
-$port = 3306;
-
-$conn = new mysqli($host, $user, $pass, $db, $port);
-if ($conn->connect_error){
-    die("Connection failed: " . $conn->connect_error);
-}
+include '../db_connect.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $eventName = $_POST['eventName'];
@@ -39,29 +30,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="Basyirah" content="Web Engineering Project - Add Event">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Event - MyPetakom</title>
-    <link rel="stylesheet" href="style/eventadvisor.css">
+    <link rel="stylesheet" href="../module2/addEvent.css">
 </head>
 <body>
-    <!-- Top Header -->
-    <div class="top-heading-container">
-        MyPetakom - Add Event
-    </div>
 
-    <div class="container">
-        <div class="sidebar">
-            <div class="logo">
-                <img src="TestImages/UMP-Logo.jpg" alt="UMP Logo">
-            </div>
-            <img src="TestImages/user.png" alt="Profile Picture">
-            <h2>Event Advisor</h2>
-            <a href="eventadvisorprofile.php">Profile</a>
-            <a href="dashboardeventadvisor.php">Dashboard</a>
-            <a href="event.php">Events</a>
-            <a href="meriteventadvisor.php">Merit</a>
-            <a href="committee.php">Committee</a>
-            <a href="attendanceeventadvisor.php">Attendance</a>
-        </div>
+<?php include "../sideBar/Advisor_SideBar.php";?>
 
+   
         <main class="main-content">
             <div class="header">
                 <h1>Add Event</h1>

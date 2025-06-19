@@ -8,15 +8,8 @@ if (!isset($_SESSION['advisorID'])) {
 $advisorID = $_SESSION['advisorID'];
 
 // DB connection
-$host = 'localhost';
-$user = 'root';
-$pass = '';
-$db = 'mypetakom';
-$port = 3306;
-$conn = new mysqli($host, $user, $pass, $db, $port);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+include '../db_connect.php';
+
 
 $message = "";
 
@@ -75,7 +68,7 @@ $pendingResult = $conn->query($pendingSql);
     <meta charset="UTF-8">
     <meta name="Basyirah" content="Web Engineering Project - Student Dashboard">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style/eventadvisor.css">
+    <link rel="stylesheet" href="../module2/meriteventadvisor.css">
     <title>MyPetakom - Event Advisor</title>
     <style>
         /* Optional: Add colors to status */
@@ -85,34 +78,15 @@ $pendingResult = $conn->query($pendingSql);
     </style>
 </head>
 <body>
-    <!-- Top Header -->
-    <div class="top-heading-container">
-        MyPetakom - Event Advisor
-    </div>
 
-    <div class="container">
-        <div class="sidebar">
-            <!-- PETAKOM Logo -->
-            <div class="logo">
-                <img src="TestImages/petakom.png" alt="PETAKOM Logo">
-            </div>
-            <!-- Profile Picture -->
-            <img src="TestImages/user.png" alt="Profile Picture">
-            <h2>Event Advisor</h2>
-            <a href="eventadvisorprofile.php">Profile</a>
-            <a href="dashboardeventadvisor.php">Dashboard</a>
-            <a href="event.php">Events</a>
-            <a href="meriteventadvisor.php">Merit</a>
-            <a href="committee.php">Committee</a>
-            <a href="attendanceeventadvisor.php">Attendance</a>
-        </div>
+<?php include "../sideBar/Advisor_SideBar.php";?>
+
 
         <main class="main-content">
             <div class="header">
                 <div class="header-left">
-                    <h1>Welcome</h1>
+                    <h1>Merit</h1>
                 </div>
-                <a href="signout.php" class="signout-btn">SIGN OUT</a>
             </div>
 
             <?php if ($message): ?>
