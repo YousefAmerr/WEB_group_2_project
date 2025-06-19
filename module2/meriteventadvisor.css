@@ -10,9 +10,11 @@ body {
     background-color: #f8f9fa;
     color: #333;
     line-height: 1.6;
+    overflow: hidden;
+    /* Consistent with sidebar layout */
 }
 
-/* Layout container */
+/* Layout container - Not needed with sidebar layout */
 .container {
     display: flex;
     min-height: 100vh;
@@ -21,9 +23,9 @@ body {
 /* Main content area */
 .main-content {
     flex: 1;
-    margin-left: 250px; /* Adjust based on sidebar width */
     padding: 20px 40px;
-    background-color: #ffffff;
+    background-color: transparent;
+    /* Let sidebar handle background */
 }
 
 /* Header section */
@@ -144,15 +146,15 @@ body {
         margin-left: 0;
         padding: 20px;
     }
-    
+
     .header-left h1 {
         font-size: 24px;
     }
-    
+
     .form {
         max-width: 100%;
     }
-    
+
     .button {
         display: block;
         margin-right: 0;
@@ -384,20 +386,20 @@ p[style*="color"] {
     table {
         font-size: 12px;
     }
-    
+
     table th,
     table td {
         padding: 8px 6px;
     }
-    
+
     .main-content {
         padding: 20px;
     }
-    
+
     form {
         max-width: 100%;
     }
-    
+
     h2 {
         font-size: 20px;
     }
@@ -410,7 +412,7 @@ p[style*="color"] {
         overflow-x: auto;
         white-space: nowrap;
     }
-    
+
     table thead,
     table tbody,
     table th,
@@ -418,13 +420,13 @@ p[style*="color"] {
     table tr {
         display: block;
     }
-    
+
     table thead tr {
         position: absolute;
         top: -9999px;
         left: -9999px;
     }
-    
+
     table tr {
         border: 1px solid #ccc;
         margin-bottom: 10px;
@@ -432,7 +434,7 @@ p[style*="color"] {
         border-radius: 6px;
         background-color: #ffffff;
     }
-    
+
     table td {
         border: none;
         position: relative;
@@ -440,7 +442,7 @@ p[style*="color"] {
         padding-bottom: 10px;
         white-space: normal;
     }
-    
+
     table td:before {
         content: attr(data-label) ": ";
         position: absolute;

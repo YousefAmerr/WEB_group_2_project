@@ -65,28 +65,25 @@ while ($row = $merit_result->fetch_assoc()) {
 }
 $merit_stmt->close();
 $conn->close();
-
-// Get current academic year
-$current_year = date('Y');
-$academic_year = ($current_year - 1) . '/' . $current_year;
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Information - <?php echo ($student['studentName']); ?></title>
-        <link rel="stylesheet" href="css/student_info.css" />
+    <link rel="stylesheet" href="css/student_info.css" />
 
 </head>
+
 <body>
     <div class="container">
         <div class="header">
             <h1>Student Information</h1>
-            <p>Academic Year <?php echo $academic_year; ?></p>
         </div>
-        
+
         <div class="student-info">
             <div class="info-card">
                 <div class="info-row">
@@ -106,33 +103,31 @@ $academic_year = ($current_year - 1) . '/' . $current_year;
                     <span class="info-value"><?php echo ($student['studentEmail'] ?? 'N/A'); ?></span>
                 </div>
             </div>
-            
+
             <div class="merit-total">
                 <h2><?php echo $student['totalMerit']; ?></h2>
                 <p>Total Merit Points</p>
             </div>
-            
+
             <?php if (!empty($merit_breakdown)): ?>
-            <div class="merit-breakdown">
-                <h3>Merit Points Breakdown</h3>
-                <?php foreach ($merit_breakdown as $merit): ?>
-                <div class="merit-item">
-                    <div class="event-info">
-                        <div class="event-name"><?php echo ($merit['eventName']); ?></div>
-                        <div class="event-level"><?php echo ($merit['eventLevel']); ?> Level</div>
-                    </div>
-                    <div class="merit-points"><?php echo $merit['meritPoints']; ?> pts</div>
+                <div class="merit-breakdown">
+                    <h3>Merit Points Breakdown</h3>
+                    <?php foreach ($merit_breakdown as $merit): ?>
+                        <div class="merit-item">
+                            <div class="event-info">
+                                <div class="event-name"><?php echo ($merit['eventName']); ?></div>
+                                <div class="event-level"><?php echo ($merit['eventLevel']); ?> Level</div>
+                            </div>
+                            <div class="merit-points"><?php echo $merit['meritPoints']; ?> pts</div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
-                <?php endforeach; ?>
-            </div>
             <?php else: ?>
-            <div class="no-merits">
-                <p>No merit points recorded for this academic year.</p>
-            </div>
-            <?php endif; ?>
+                <div class="no-merits">
+                    <p>No merit points recorded for this academic year.</p>
+                </div> <?php endif; ?>
         </div>
-        
-        
     </div>
 </body>
+
 </html>

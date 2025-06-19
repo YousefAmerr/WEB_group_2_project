@@ -9,28 +9,33 @@
 body {
     background-color: #f9f9f9;
     color: #333;
-    padding: 20px;
+    overflow: hidden;
+    /* Consistent with sidebar layout */
 }
 
-.main-content {
-    max-width: 1100px;
-    margin: 0 auto;
+/* Container for content */
+.container {
+    width: 100%;
+    padding: 20px 40px;
     background: #fff;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 /* Header Section */
 .header {
     margin-bottom: 30px;
     border-bottom: 2px solid #ddd;
-    padding-bottom: 10px;
+    padding-bottom: 15px;
+    padding-top: 20px;
+    /* Add top padding for better spacing */
 }
 
 .header h1 {
     font-size: 28px;
     color: #2c3e50;
+    margin: 0;
 }
 
 /* Events Header */
@@ -60,16 +65,32 @@ body {
 }
 
 /* Form & Dropdown */
+form {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
 form label {
     font-weight: bold;
     margin-right: 10px;
+    color: #495057;
 }
 
 select {
-    padding: 6px 10px;
+    padding: 8px 12px;
     border-radius: 4px;
-    border: 1px solid #ccc;
+    border: 2px solid #ced4da;
     font-size: 14px;
+    background-color: white;
+    transition: border-color 0.3s ease;
+}
+
+select:focus {
+    border-color: #3498db;
+    outline: none;
 }
 
 /* Table Styles */
@@ -132,7 +153,12 @@ table tr:hover {
         margin-top: 10px;
     }
 
-    table, thead, tbody, th, td, tr {
+    table,
+    thead,
+    tbody,
+    th,
+    td,
+    tr {
         display: block;
     }
 

@@ -1,3 +1,11 @@
+<?php
+include '../db_connect.php';
+
+$profileImg = "https://api.dicebear.com/7.x/avataaars/svg?seed=John"; // default
+
+
+?>
+
 
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 
@@ -58,12 +66,14 @@ body {
 }
 
 .nav-item {
-    padding: 30px 20px;
+    padding: 10px 20px;
     display: flex;
     align-items: center;
     cursor: pointer;
     transition: all 0.2s;
     position: relative;
+        margin-top: 20px;
+
 }
 
 .nav-item:hover {
@@ -245,7 +255,7 @@ h2 {
       <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=John" alt="Profile" class="profile-img" />
     </button>
     <div class="dropdown-content" id="profileDropdown">
-      <a href="profile.html"><i class="material-icons">person</i> My Profile</a>
+      <a href="../module1/profile.php"><i class="material-icons">person</i> My Profile</a>
       <a href="../module1/logout.php"><i class="material-icons">exit_to_app</i> Logout</a>
     </div>
   </div>

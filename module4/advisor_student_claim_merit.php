@@ -34,10 +34,18 @@ if ($_POST && isset($_POST['action']) && isset($_POST['claim_id'])) {
         $update_sql = "UPDATE meritclaim SET status = ? WHERE claim_id = ?";
         $update_stmt = $conn->prepare($update_sql);
         $update_stmt->bind_param("si", $new_status, $claim_id);
-
         if ($update_stmt->execute()) {
             $message = "Claim has been " . strtolower($new_status) . " successfully.";
             $message_type = "success";
+
+            // If claim is approved, automatically process it for merit award
+            if ($action === 'approve') {
+                include 'merit_functions.php';
+                $results = autoProcessMeritClaims();
+                if ($results['total'] > 0) {
+                    $message .= " Merit award has been automatically processed.";
+                }
+            }
         } else {
             $message = "Error updating claim status.";
             $message_type = "error";
@@ -49,6 +57,7 @@ if ($_POST && isset($_POST['action']) && isset($_POST['claim_id'])) {
 // filter parameters
 $statusFilter = isset($_GET['status']) ? $_GET['status'] : '';
 $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
+$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 ?>
 
@@ -98,13 +107,20 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                 <div class="stat-label">Rejected</div>
             </div>
         </div>
-
         <div class="filters-container">
             <form method="GET" action="">
                 <div class="filter-row">
                     <div class="filter-group">
+                        <label for="search">Search Claims:</label>
+                        <input type="text"
+                            id="search"
+                            name="search"
+                            placeholder="Search by student, email, event name..."
+                            value="<?php echo htmlspecialchars($searchQuery); ?>">
+                    </div>
+                    <div class="filter-group">
                         <label for="status">Filter by Status:</label>
-                        <select id="status" name="status" onchange="this.form.submit()">
+                        <select id="status" name="status">
                             <option value="">All Status</option>
                             <option value="Pending" <?php echo ($statusFilter == 'Pending') ? 'selected' : ''; ?>>Pending</option>
                             <option value="Approved" <?php echo ($statusFilter == 'Approved') ? 'selected' : ''; ?>>Approved</option>
@@ -113,7 +129,7 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                     </div>
                     <div class="filter-group">
                         <label for="student">Filter by Student:</label>
-                        <select id="student" name="student" onchange="this.form.submit()">
+                        <select id="student" name="student">
                             <option value="">All Students</option>
                             <?php
                             $students_sql = "SELECT DISTINCT s.studentID, s.studentName FROM student s 
@@ -129,14 +145,23 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                             ?>
                         </select>
                     </div>
+                    <div class="filter-group">
+                        <button type="submit" class="search-btn">
+                            <i class="material-icons">search</i>
+                            Search
+                        </button>
+                        <a href="?" class="clear-btn">
+                            <i class="material-icons">clear</i>
+                            Clear
+                        </a>
+                    </div>
                 </div>
             </form>
         </div>
 
         <div class="claims-container">
             <?php
-            try {
-                // Build query with filters
+            try {                // Build query with filters
                 $sql = "SELECT mc.*, s.studentName, s.studentEmail, e.eventName, e.eventLevel 
                         FROM meritclaim mc
                         JOIN student s ON mc.studentID = s.studentID
@@ -158,6 +183,17 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                     $types .= "s";
                 }
 
+                // Add search filter if provided
+                if (!empty($searchQuery)) {
+                    $sql .= " AND (s.studentName LIKE ? OR s.studentEmail LIKE ? OR e.eventName LIKE ? OR e.eventLevel LIKE ?)";
+                    $searchParam = "%{$searchQuery}%";
+                    $params[] = $searchParam;
+                    $params[] = $searchParam;
+                    $params[] = $searchParam;
+                    $params[] = $searchParam;
+                    $types .= "ssss";
+                }
+
                 $sql .= " ORDER BY mc.claim_date DESC";
 
                 $stmt = $conn->prepare($sql);
@@ -166,13 +202,28 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                 }
                 $stmt->execute();
                 $result = $stmt->get_result();
-
                 if ($result->num_rows === 0) {
                     echo '<div class="no-claims">
                             <i class="material-icons">assignment</i>
-                            <h3>No Claims Found</h3>
-                            <p>There are no merit claims matching your current filters.</p>
-                          </div>';
+                            <h3>No Claims Found</h3>';
+
+                    if (!empty($searchQuery) || !empty($statusFilter) || !empty($studentFilter)) {
+                        echo '<p>No merit claims match your current search and filter criteria.</p>';
+                        if (!empty($searchQuery)) {
+                            echo '<p>Search: "<strong>' . htmlspecialchars($searchQuery) . '</strong>"</p>';
+                        }
+                        if (!empty($statusFilter)) {
+                            echo '<p>Status: <strong>' . htmlspecialchars($statusFilter) . '</strong></p>';
+                        }
+                        if (!empty($studentFilter)) {
+                            echo '<p>Student Filter: <strong>Applied</strong></p>';
+                        }
+                        echo '<p><a href="?" style="color: #007bff; text-decoration: none;">Clear all filters</a></p>';
+                    } else {
+                        echo '<p>There are no merit claims to review at this time.</p>';
+                    }
+
+                    echo '</div>';
                 } else {
                     while ($row = $result->fetch_assoc()) {
                         $claimId = $row['claim_id'];
@@ -274,16 +325,7 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                     <p>Review the supporting document for this merit claim.</p>
                 </div>
                 <div id="documentContainer">
-                    <img id="documentImage" class="document-preview" style="display: none; max-width: 100%; height: auto;" />
-                    <iframe id="documentPdf" class="document-preview" style="display: none; width: 100%; height: 600px; border: none;" frameborder="0"></iframe>
-                    <div id="documentDownload" style="display: none; text-align: center; padding: 20px;">
-                        <i class="material-icons" style="font-size: 48px; color: #007bff;">description</i>
-                        <p>This document cannot be previewed in the browser.</p>
-                        <a id="downloadLink" href="#" target="_blank" class="btn btn-primary">
-                            <i class="material-icons">download</i>
-                            Download Document
-                        </a>
-                    </div>
+                    <img id="documentImage" class="document-preview" style="display: none;" />
                     <div id="documentError" style="display: none; text-align: center; color: #dc3545;">
                         <i class="material-icons" style="font-size: 48px;">error</i>
                         <p>Unable to load document</p>
@@ -303,67 +345,23 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
             const modal = document.getElementById('documentModal');
             const modalClaimId = document.getElementById('modalClaimId');
             const documentImage = document.getElementById('documentImage');
-            const documentPdf = document.getElementById('documentPdf');
-            const documentDownload = document.getElementById('documentDownload');
-            const downloadLink = document.getElementById('downloadLink');
             const documentError = document.getElementById('documentError');
 
             modalClaimId.textContent = claimId;
 
-            // Hide all elements initially
             documentImage.style.display = 'none';
-            documentPdf.style.display = 'none';
-            documentDownload.style.display = 'none';
             documentError.style.display = 'none';
 
-            // Get file extension
-            const fileExtension = filename.toLowerCase().split('.').pop();
-            const filePath = 'uploads/meritclaim/' + filename;
+            documentImage.onload = function() {
+                documentImage.style.display = 'block';
+            };
 
-            // Handle different file types
-            if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) {
-                // Handle images
-                documentImage.onload = function() {
-                    documentImage.style.display = 'block';
-                };
-
-                documentImage.onerror = function() {
-                    documentError.style.display = 'block';
-                };
-
-                documentImage.src = filePath;
-            } else if (fileExtension === 'pdf') {
-                // Handle PDFs
-                let pdfLoaded = false;
-
-                // Set a timeout to show error if PDF doesn't load
-                const pdfTimeout = setTimeout(() => {
-                    if (!pdfLoaded) {
-                        documentError.style.display = 'block';
-                    }
-                }, 5000); // 5 second timeout
-
-                documentPdf.onload = function() {
-                    pdfLoaded = true;
-                    clearTimeout(pdfTimeout);
-                    documentPdf.style.display = 'block';
-                };
-
-                documentPdf.src = filePath;
-
-                // Immediately show the PDF iframe (it will load the PDF)
-                documentPdf.style.display = 'block';
-
-            } else if (['doc', 'docx'].includes(fileExtension)) {
-                // Handle Word documents - show download option
-                downloadLink.href = filePath;
-                downloadLink.download = filename;
-                documentDownload.style.display = 'block';
-
-            } else {
-                // Unknown file type
+            documentImage.onerror = function() {
                 documentError.style.display = 'block';
-            }
+            };
+
+            // Fix the path - use forward slash and correct relative path
+            documentImage.src = 'uploads/meritclaim/' + filename;
 
             modal.style.display = 'block';
         }

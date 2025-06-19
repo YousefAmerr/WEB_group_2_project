@@ -28,6 +28,7 @@ while ($row = $levelResult->fetch_assoc()) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="Jaclina" content="Web Engineering Project- Student Dashboard">
@@ -37,21 +38,16 @@ while ($row = $levelResult->fetch_assoc()) {
     <!-- Add Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
-   
-<?php include '../sideBar/Advisor_SideBar.php'; ?>
 
-
-    <div class="container">
-        
-
-        
-        <main class="main-content">
+    <?php include '../sideBar/Advisor_SideBar.php'; ?>
+    <div class="main-content">
+        <div class="container">
             <div class="header">
                 <div class="header-left">
                     <h1>Event Reports</h1>
                 </div>
-              
             </div>
 
             <!-- Stats Section -->
@@ -82,15 +78,15 @@ while ($row = $levelResult->fetch_assoc()) {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php 
-                        if ($eventResult->num_rows > 0){
+                        <?php
+                        if ($eventResult->num_rows > 0) {
                             $i = 1;
                             while ($row = $eventResult->fetch_assoc()) {
                                 echo "<tr>";
                                 echo "<td>" . $i++ . "</td>";
-                                echo "<td>" . htmlspecialchars($row['eventName']). "</td>";
-                                echo "<td>" . htmlspecialchars($row['eventLocation']). "</td>";
-                                echo "<td>" . htmlspecialchars($row['eventLevel']). "</td>";
+                                echo "<td>" . htmlspecialchars($row['eventName']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['eventLocation']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['eventLevel']) . "</td>";
                                 echo "</tr>";
                             }
                         } else {
@@ -100,54 +96,54 @@ while ($row = $levelResult->fetch_assoc()) {
                     </tbody>
                 </table>
             </section>
-        </main>
+        </div>
     </div>
 
     <!-- Chart.js script -->
     <script>
         // Chart.js script
-const ctx = document.getElementById('eventStatusChart').getContext('2d');
-const eventStatusChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: <?php echo json_encode($eventLevelLabels); ?>,
-        datasets: [{
-            label: 'Event Level',
-            data: <?php echo json_encode($eventLevelCounts); ?>,
-            backgroundColor: [
-                'rgba(75, 192, 192, 0.6)',
-                'rgba(255, 206, 86, 0.6)',
-                'rgba(255, 99, 132, 0.6)',
-                'rgba(153, 102, 255, 0.6)',
-                'rgba(54, 162, 235, 0.6)' 
-            ],
-            borderColor: [
-                'rgba(75, 192, 192, 1)',
-                'rgba(255, 206, 86, 1)',
-                'rgba(255, 99, 132, 1)',
-                'rgba(153, 102, 255, 1)',
-                'rgba(54, 162, 235, 1)'
-            ],
-            borderWidth: 1
-        }]
-    },
-    options: {
-        responsive: false, // Prevent resizing
-        maintainAspectRatio: false, // Allow fixed width/height
-        plugins: {
-            legend: {
-                position: 'bottom',
+        const ctx = document.getElementById('eventStatusChart').getContext('2d');
+        const eventStatusChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: <?php echo json_encode($eventLevelLabels); ?>,
+                datasets: [{
+                    label: 'Event Level',
+                    data: <?php echo json_encode($eventLevelCounts); ?>,
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(153, 102, 255, 0.6)',
+                        'rgba(54, 162, 235, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(54, 162, 235, 1)'
+                    ],
+                    borderWidth: 1
+                }]
             },
-            title: {
-                display: true,
-                text: 'Event Level Distribution'
+            options: {
+                responsive: false, // Prevent resizing
+                maintainAspectRatio: false, // Allow fixed width/height
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Event Level Distribution'
+                    }
+                }
             }
-        }
-    }
-});
-
+        });
     </script>
 </body>
+
 </html>
 <?php
 $conn->close();

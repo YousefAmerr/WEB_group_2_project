@@ -57,12 +57,14 @@ body {
 }
 
 .nav-item {
-    padding: 30px 20px;
+    padding: 10px 20px;
     display: flex;
     align-items: center;
     cursor: pointer;
     transition: all 0.2s;
     position: relative;
+        margin-top: 20px;
+
 }
 
 .nav-item:hover {
@@ -237,12 +239,12 @@ h2 {
 <!-- Top Bar -->
 <div class="top-bar">
   <div class="profile-dropdown">
-    <div class="user-type">COORDINATOR</div>
+    <div class="user-type">STUDENT</div>
     <button class="profile-btn" onclick="toggleDropdown(event)">
       <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=John" alt="Profile" class="profile-img" />
     </button>
     <div class="dropdown-content" id="profileDropdown">
-      <a href="profile.html"><i class="material-icons">person</i> My Profile</a>
+      <a href="../module1/profile.php"><i class="material-icons">person</i> My Profile</a>
       <a href="../module1/logout.php"><i class="material-icons">exit_to_app</i> Logout</a>
     </div>
   </div>

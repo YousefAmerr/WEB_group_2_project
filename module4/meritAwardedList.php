@@ -25,13 +25,13 @@ if (empty($studentID)) {
     exit();
 }
 
-// Get selected role filter
+// Get selected role filter and search query
 $roleFilter = isset($_GET['category']) ? $_GET['category'] : '';
-
+$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 $meritQuery = "SELECT DISTINCT ma.*, e.eventName, e.eventLocation, e.eventLevel, e.semester, 
-               COALESCE(app.role_type, 'participant') as role_type,
-               COALESCE(app.submissionDate, (
+               COALESCE(app.role_type, mc.roleType, 'participant') as role_type,
+               COALESCE(app.submissionDate, mc.claim_date, (
                    SELECT MIN(att_inner.attendanceDate) 
                    FROM attendancecslot acs_inner 
                    JOIN attendance att_inner ON acs_inner.attendanceID = att_inner.attendanceID 
@@ -42,23 +42,33 @@ $meritQuery = "SELECT DISTINCT ma.*, e.eventName, e.eventLocation, e.eventLevel,
                FROM meritaward ma
                JOIN event e ON ma.eventID = e.eventID
                LEFT JOIN meritapplication app ON ma.studentID = app.studentID AND ma.eventID = app.eventID
+               LEFT JOIN meritclaim mc ON ma.studentID = mc.studentID AND ma.eventID = mc.eventID AND mc.status = 'Approved'
                WHERE ma.studentID = ?";
 
 // Add role filter if selected
 $params = [$studentID];
+$paramTypes = "s";
+
 if (!empty($roleFilter)) {
-    $meritQuery .= " AND COALESCE(app.role_type, 'participant') = ?";
+    $meritQuery .= " AND COALESCE(app.role_type, mc.roleType, 'participant') = ?";
     $params[] = $roleFilter;
+    $paramTypes .= "s";
+}
+
+// Add search filter if provided
+if (!empty($searchQuery)) {
+    $meritQuery .= " AND (e.eventName LIKE ? OR e.eventLocation LIKE ? OR e.eventLevel LIKE ?)";
+    $searchParam = "%{$searchQuery}%";
+    $params[] = $searchParam;
+    $params[] = $searchParam;
+    $params[] = $searchParam;
+    $paramTypes .= "sss";
 }
 
 $meritQuery .= " ORDER BY e.semester DESC, ma.meritPoints DESC";
 
 $stmt = $conn->prepare($meritQuery);
-if (!empty($roleFilter)) {
-    $stmt->bind_param("ss", $studentID, $roleFilter);
-} else {
-    $stmt->bind_param("s", $studentID);
-}
+$stmt->bind_param($paramTypes, ...$params);
 $stmt->execute();
 $meritResult = $stmt->get_result();
 
@@ -106,23 +116,50 @@ calculateParticipantMerits();
     <?php include '../sideBar/Student_SideBar.php'; ?>
     <div class="main-content">
         <h1 class="page_title">Merit Awarded List</h1>
-
         <div class="border">
             <form class="border_filter" method="GET" action="">
-                <select id="category" name="category" onchange="this.form.submit()">
-                    <option value="">-- Select Role --</option>
-                    <option value="committee" <?php echo ($roleFilter == 'committee') ? 'selected' : ''; ?>>Committee</option>
-                    <option value="main-committee" <?php echo ($roleFilter == 'main-committee') ? 'selected' : ''; ?>>Main Committee</option>
-                    <option value="participant" <?php echo ($roleFilter == 'participant') ? 'selected' : ''; ?>>Participant</option>
-                </select>
+                <div class="filter-container">
+                    <div class="search-group">
+                        <label for="search">Search Events:</label>
+                        <input type="text"
+                            id="search"
+                            name="search"
+                            placeholder="Search by event name, location, or level..."
+                            value="<?php echo htmlspecialchars($searchQuery); ?>">
+                    </div>
+                    <div class="filter-group">
+                        <label for="category">Filter by Role:</label>
+                        <select id="category" name="category">
+                            <option value="">-- Select Role --</option>
+                            <option value="committee" <?php echo ($roleFilter == 'committee') ? 'selected' : ''; ?>>Committee</option>
+                            <option value="main-committee" <?php echo ($roleFilter == 'main-committee') ? 'selected' : ''; ?>>Main Committee</option>
+                            <option value="participant" <?php echo ($roleFilter == 'participant') ? 'selected' : ''; ?>>Participant</option>
+                        </select>
+                    </div>
+                    <div class="button-group">
+                        <button type="submit" class="search-btn">
+                            <i class="material-icons">search</i>
+                            Search
+                        </button>
+                        <a href="?" class="clear-btn">
+                            <i class="material-icons">clear</i>
+                            Clear
+                        </a>
+                    </div>
+                </div>
             </form>
 
             <div class="event-list">
-                <?php
-                if (!empty($meritData)) {
+                <?php if (!empty($meritData)) {
                     foreach ($meritData as $merit) {
-                        $roleDisplay = !empty($merit['role_type']) ? ucwords(str_replace('-', ' ', $merit['role_type'])) : 'N/A';
-                        $eventDate = !empty($merit['submissionDate']) ? date('d/m/Y', strtotime($merit['submissionDate'])) : 'N/A';
+                        // Normalize role display - handle both 'Participant' and 'participant'
+                        $role = $merit['role_type'];
+                        if (strtolower($role) === 'participant') {
+                            $roleDisplay = 'Participant';
+                        } else {
+                            $roleDisplay = !empty($role) ? ucwords(str_replace('-', ' ', $role)) : 'N/A';
+                        }
+                        $eventDate = !empty($merit['submissionDate']) ? date('d/m/Y H:i', strtotime($merit['submissionDate'])) : 'N/A';
                 ?>
                         <div class="event-card">
                             <div class="sections_border">
@@ -139,13 +176,26 @@ calculateParticipantMerits();
                                     <span class="merit-score"><strong>Score:</strong> <?php echo $merit['meritPoints']; ?></span>
                                 </div>
                             </div>
-                        </div>
-                <?php
-                    }
-                } else {
-                    echo '<div class="no-events"><p>No merit awards found.</p></div>';
-                }
-                ?>
+                        </div> <?php
+                            }
+                        } else {
+                            if (!empty($searchQuery) || !empty($roleFilter)) {
+                                echo '<div class="no-events">';
+                                echo '<p><i class="material-icons" style="font-size: 48px; color: #ccc;">search_off</i></p>';
+                                echo '<p>No merit awards found matching your search criteria.</p>';
+                                if (!empty($searchQuery)) {
+                                    echo '<p>Search term: "<strong>' . htmlspecialchars($searchQuery) . '</strong>"</p>';
+                                }
+                                if (!empty($roleFilter)) {
+                                    echo '<p>Role filter: <strong>' . ucwords(str_replace('-', ' ', $roleFilter)) . '</strong></p>';
+                                }
+                                echo '<p><a href="?" style="color: #007bff; text-decoration: none;">Clear filters to see all results</a></p>';
+                                echo '</div>';
+                            } else {
+                                echo '<div class="no-events"><p>No merit awards found.</p></div>';
+                            }
+                        }
+                                ?>
             </div>
         </div>
 
@@ -157,6 +207,10 @@ calculateParticipantMerits();
                     <p><strong>Total Semester 2 Merits Points:</strong> <span style="padding-left: 30px;"><?php echo getSemester2MeritTotal($studentID); ?></span></p>
                     <?php if (!empty($roleFilter)): ?>
                         <p><strong>Filtered by Role:</strong> <span style="padding-left: 30px;"><?php echo ucwords(str_replace('-', ' ', $roleFilter)); ?></span></p>
+                    <?php endif; ?>
+                    <?php if (!empty($searchQuery)): ?>
+                        <p><strong>Search Query:</strong> <span style="padding-left: 30px;">"<?php echo htmlspecialchars($searchQuery); ?>"</span></p>
+                        <p><strong>Search Results:</strong> <span style="padding-left: 30px;"><?php echo count($meritData); ?> events found</span></p>
                     <?php endif; ?>
                 </div>
             </div>
@@ -239,7 +293,55 @@ calculateParticipantMerits();
                     }, 2000);
                 });
             });
+
+            // Search functionality enhancements
+            const searchInput = document.getElementById('search');
+            const categorySelect = document.getElementById('category');
+
+            // Real-time search with debounce
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function() {
+                    if (searchInput.value.length >= 3 || searchInput.value.length === 0) {
+                        // Auto-submit form when user types 3+ characters or clears the search
+                        document.querySelector('.border_filter').submit();
+                    }
+                }, 500); // 500ms delay
+            });
+
+            // Auto-submit when category changes
+            categorySelect.addEventListener('change', function() {
+                document.querySelector('.border_filter').submit();
+            });
+
+            // Handle Enter key in search input
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.querySelector('.border_filter').submit();
+                }
+            });
+
+            // Highlight search results
+            const searchQuery = '<?php echo addslashes($searchQuery); ?>';
+            if (searchQuery) {
+                highlightSearchTerms(searchQuery);
+            }
         });
+
+        function highlightSearchTerms(query) {
+            if (!query) return;
+
+            const eventCards = document.querySelectorAll('.event-card');
+            eventCards.forEach(function(card) {
+                const textElements = card.querySelectorAll('h3, p');
+                textElements.forEach(function(element) {
+                    const regex = new RegExp(`(${query})`, 'gi');
+                    element.innerHTML = element.innerHTML.replace(regex, '<mark style="background-color: #fff59d; padding: 1px 2px; border-radius: 2px;">$1</mark>');
+                });
+            });
+        }
     </script>
 </body>
 

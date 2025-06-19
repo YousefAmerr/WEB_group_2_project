@@ -5,10 +5,10 @@ require_once '../db_connect.php';
 // Define merit points by event level and role type
 function getMeritPoints($eventLevel, $role_type)
 {
-
     $level = strtoupper(trim($eventLevel));
+    $role = strtolower(trim($role_type)); // Normalize role to lowercase
 
-    // Define points from taable
+    // Define points table with lowercase role keys for consistency
     $pointsTable = [
         'INTERNATIONAL' => ['main-committee' => 100, 'committee' => 70, 'participant' => 50],
         'NATIONAL'      => ['main-committee' => 80,  'committee' => 50, 'participant' => 40],
@@ -17,8 +17,8 @@ function getMeritPoints($eventLevel, $role_type)
         'UMPSA'         => ['main-committee' => 30,  'committee' => 20, 'participant' => 5]
     ];
 
-    if (isset($pointsTable[$level][$role_type])) {
-        return $pointsTable[$level][$role_type];
+    if (isset($pointsTable[$level][$role])) {
+        return $pointsTable[$level][$role];
     }
 
     return 0;
@@ -162,9 +162,11 @@ function calculateParticipantMerits()
         // Calculate points for participant
         $points = getMeritPoints($eventLevel, 'participant');
 
-        // Store in meritaward table
-        storeOrUpdateMeritAwardMySQLi($conn, $studentID, $eventID, $points);
-        $processed++;
+        if ($points > 0) {
+            // Store in meritaward table
+            storeOrUpdateMeritAwardMySQLi($conn, $studentID, $eventID, $points);
+            $processed++;
+        }
     }
 
     $stmt->close();
@@ -208,4 +210,148 @@ function getSemester2MeritTotal($studentID)
     $stmt->close();
 
     return $result['total_merits'] ?? 0;
+}
+
+/**
+ * Process approved merit claims and add them to meritaward table
+ * This function checks for approved claims that haven't been processed yet
+ * and adds them to the meritaward table with appropriate merit points
+ */
+function processApprovedMeritClaims()
+{
+    global $conn;
+
+    if (!$conn || $conn->connect_error) {
+        die("Database connection failed: " . $conn->connect_error);
+    }
+
+    // Get all approved claims that don't have merit awards yet
+    $sql = "
+        SELECT mc.studentID, mc.eventID, mc.claim_id, mc.roleType, e.eventLevel
+        FROM meritclaim mc
+        JOIN event e ON mc.eventID = e.eventID
+        LEFT JOIN meritaward mw ON mc.studentID = mw.studentID AND mc.eventID = mw.eventID
+        WHERE mc.status = 'Approved' 
+        AND mw.ma_ID IS NULL
+    ";
+
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        die("Database error: " . $conn->error);
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $processed = 0;
+    while ($row = $result->fetch_assoc()) {
+        $studentID = $row['studentID'];
+        $eventID = $row['eventID'];
+        $eventLevel = $row['eventLevel'];
+        $roleType = strtolower($row['roleType'] ?: 'participant'); // Default to participant if null and normalize case
+
+        // Calculate points based on the claimed role type
+        $points = getMeritPoints($eventLevel, $roleType);
+
+        // Store in meritaward table
+        $insertSql = "INSERT INTO meritaward (studentID, eventID, meritPoints) VALUES (?, ?, ?)";
+        $insertStmt = $conn->prepare($insertSql);
+
+        if (!$insertStmt) {
+            die("Database error (insert): " . $conn->error);
+        }
+
+        $insertStmt->bind_param("ssi", $studentID, $eventID, $points);
+
+        if ($insertStmt->execute()) {
+            $processed++;
+        }
+
+        $insertStmt->close();
+    }
+
+    $stmt->close();
+    return $processed;
+}
+
+/**
+ * Fix existing participant records with 0 merit points
+ * This function will recalculate and update merit points for participants
+ */
+function fixParticipantMeritPoints()
+{
+    global $conn;
+
+    if (!$conn || $conn->connect_error) {
+        die("Database connection failed: " . $conn->connect_error);
+    }
+
+    // Find merit awards with 0 points that should be participants
+    $sql = "
+        SELECT mw.ma_ID, mw.studentID, mw.eventID, e.eventLevel
+        FROM meritaward mw
+        JOIN event e ON mw.eventID = e.eventID
+        LEFT JOIN meritapplication ma ON mw.studentID = ma.studentID 
+            AND mw.eventID = ma.eventID 
+            AND ma.status = 'Approved'
+            AND ma.role_type IN ('committee', 'main-committee')
+        WHERE mw.meritPoints = 0
+        AND ma.studentID IS NULL
+    ";
+
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        die("Database error: " . $conn->error);
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $fixed = 0;
+    while ($row = $result->fetch_assoc()) {
+        $ma_ID = $row['ma_ID'];
+        $eventLevel = $row['eventLevel'];
+
+        // Calculate correct participant points
+        $points = getMeritPoints($eventLevel, 'participant');
+
+        if ($points > 0) {
+            // Update the merit award with correct points
+            $updateSql = "UPDATE meritaward SET meritPoints = ? WHERE ma_ID = ?";
+            $updateStmt = $conn->prepare($updateSql);
+
+            if (!$updateStmt) {
+                die("Database error (update): " . $conn->error);
+            }
+
+            $updateStmt->bind_param("ii", $points, $ma_ID);
+            if ($updateStmt->execute()) {
+                $fixed++;
+            }
+            $updateStmt->close();
+        }
+    }
+
+    $stmt->close();
+    return $fixed;
+}
+
+/**
+ * Automatically run the process approved merit claims function
+ * This can be called periodically or after claim approval
+ */
+function autoProcessMeritClaims()
+{
+    $processedClaims = processApprovedMeritClaims();
+    $processedCommittee = calculate_Committee_Main_Committee_Merits();
+    $processedParticipants = calculateParticipantMerits();
+    $fixedParticipants = fixParticipantMeritPoints();
+
+    return [
+        'claims' => $processedClaims,
+        'committee' => $processedCommittee,
+        'participants' => $processedParticipants,
+        'fixed' => $fixedParticipants,
+        'total' => $processedClaims + $processedCommittee + $processedParticipants + $fixedParticipants
+    ];
 }
