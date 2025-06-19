@@ -1,27 +1,7 @@
 <?php
-session_start();
-
-// Check if user is logged in
-if (!isset($_SESSION['userID']) || $_SESSION['role'] !== 'Student') {
-    // If not logged in as student, redirect to login
-    header("Location: login.php");
-    exit();
-}
-
-// Get student ID from session
-$studentID = $_SESSION['userID'];
 
 // DB connection
-$host = 'localhost';
-$user = 'root';
-$pass = '';
-$db = 'mypetakom';
-$port = 3306;
-
-$conn = new mysqli($host, $user, $pass, $db, $port);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+include '../db_connect.php';
 
 // Fetch approved merit applications for the student
 $sql = "
@@ -43,37 +23,18 @@ $result = $stmt->get_result();
     <meta name="Basyirah" content="Web Engineering Project - Student Dashboard">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyPetakom - My Events</title>
-    <link rel="stylesheet" href="style/StudentDash.css">
+    <link rel="stylesheet" href="../module2/studentevent.css">
 </head>
 <body>
-    <!-- Top Header -->
-    <div class="top-heading-container">
-        MyPetakom - Student 
-    </div>
 
-    <div class="container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <!-- UMP Logo -->
-            <div class="logo">
-                <img src="TestImages/petakom.png" alt="PETAKOM Logo">
-            </div>
-            <!-- Profile Picture -->
-            <img src="TestImages/user.png" alt="Profile Picture">
-            <h2>Student</h2>
-            <a href="studentprofile.php">Profile</a>
-            <a href="dashboardstudent.php">Dashboard</a>
-            <a href="studentevent.php">Events</a>
-            <a href="studCheckIn.php">Attendance</a>
-            <a href="Managemerit.php">Merit Management</a>
-        </div>
+<?php include "../sideBar/Student_SideBar.php";?>
+
 
         <!-- Main Content -->
         <div class="main-content">
             <div class="header">
-                <h1>Events</h1>
+                <h1>Event Info</h1>
             </div>
-            <a href="signout.php" class="signout-btn">SIGN OUT</a>
 
             <section class="upcoming-events">
                 <h2 class="h2">My Approved Events</h2>

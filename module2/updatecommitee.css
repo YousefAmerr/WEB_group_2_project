@@ -1,0 +1,101 @@
+/* Base Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f4f6f9;
+    color: #2c3e50;
+    padding: 20px;
+}
+
+/* Main Content Area */
+.main-content {
+    max-width: 750px;
+    margin: auto;
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Page Header */
+.header {
+    margin-bottom: 30px;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 10px;
+}
+
+.header-left h1 {
+    font-size: 28px;
+    color: #34495e;
+}
+
+/* Form Styling */
+form {
+    margin-top: 10px;
+}
+
+form label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+}
+
+form select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+    font-size: 14px;
+    background-color: #fff;
+    transition: border-color 0.3s ease;
+}
+
+form select:focus {
+    border-color: #3498db;
+    outline: none;
+}
+
+form button,
+form .button {
+    display: inline-block;
+    padding: 10px 20px;
+    margin-right: 10px;
+    font-size: 15px;
+    color: white;
+    background-color: #2980b9;
+    border: none;
+    border-radius: 6px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+form .button:hover,
+form button:hover {
+    background-color: #1c5985;
+}
+
+form .button:last-child {
+    background-color: #7f8c8d;
+}
+
+form .button:last-child:hover {
+    background-color: #5d6d7e;
+}
+
+/* Success Message */
+.message {
+    padding: 12px;
+    margin-bottom: 20px;
+    background-color: #e8f7e4;
+    border-left: 6px solid #27ae60;
+    color: #2e7d32;
+    font-weight: 500;
+    border-radius: 6px;
+}

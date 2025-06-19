@@ -1,0 +1,269 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    line-height: 1.5;
+}
+
+/* Layout container to work with sidebar */
+.container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Main content area (assumes sidebar takes up left space) */
+.main-content {
+    flex: 1;
+    margin-left: 0; /* Adjust based on sidebar width if needed */
+    padding: 30px 40px;
+    background-color: #f8f9fa;
+}
+
+/* Header section */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    background-color: #fff;
+    padding: 25px 30px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+/* Back button */
+.backbutton {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 20px;
+    border: 1px solid #007bff;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    background-color: transparent;
+}
+
+.backbutton:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Form container */
+.form {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+}
+
+/* Form field spacing */
+.form > * {
+    margin-bottom: 25px;
+}
+
+.form > *:last-child {
+    margin-bottom: 0;
+}
+
+/* Label styles */
+.form label {
+    display: block;
+    font-weight: 500;
+    font-size: 14px;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+/* Input field styles */
+.form input[type="text"] {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #dc3545; /* Red border as shown in image */
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: #fff;
+}
+
+.form input[type="text"]:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* Valid state (when field is filled correctly) */
+.form input[type="text"]:valid:not(:placeholder-shown) {
+    border-color: #28a745;
+}
+
+/* Select dropdown styles */
+.form select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: #fff;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* Select option styling */
+.form select option {
+    padding: 10px;
+    font-size: 14px;
+}
+
+/* Placeholder text in select */
+.form select option[value=""] {
+    color: #6c757d;
+}
+
+/* Placeholder text styling for inputs */
+.form input::placeholder {
+    color: #6c757d;
+    font-style: normal;
+}
+
+/* Submit button */
+.form button[type="submit"] {
+    background-color: #28a745;
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 10px;
+}
+
+.form button[type="submit"]:hover {
+    background-color: #218838;
+}
+
+.form button[type="submit"]:active {
+    transform: translateY(1px);
+}
+
+/* Required field indicators */
+.form input:required {
+    border-color: #dc3545;
+}
+
+.form input:required:valid {
+    border-color: #28a745;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 20px;
+    }
+    
+    .header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+        text-align: center;
+    }
+    
+    .header h1 {
+        font-size: 20px;
+    }
+    
+    .form {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-content {
+        padding: 15px;
+    }
+    
+    .header {
+        padding: 20px;
+    }
+    
+    .form {
+        padding: 15px;
+    }
+    
+    .form input[type="text"],
+    .form select {
+        padding: 10px 12px;
+    }
+}
+
+/* Sidebar compatibility - adjust main content if sidebar exists */
+.sidebar + .main-content,
+.main-content.with-sidebar {
+    margin-left: 250px; /* Adjust based on your sidebar width */
+}
+
+@media (max-width: 1024px) {
+    .sidebar + .main-content,
+    .main-content.with-sidebar {
+        margin-left: 0;
+    }
+}
+
+/* Focus states for accessibility */
+.form input:focus,
+.form select:focus,
+.backbutton:focus,
+.form button:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* Loading state for submit button */
+.form button[type="submit"]:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Form validation messages */
+.form .error-message {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+}
+
+.form .success-message {
+    color: #28a745;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+}

@@ -225,12 +225,15 @@ h2 {
     <div class="nav-item"><i class="material-icons">dashboard</i><a href="../module2/dashboardeventadvisor.php">Dashboard</a></div>
     <div class="nav-divider">COMPONENTS</div>
     <!-- option 1 -->
-    <div class="nav-item"><i class="material-icons">assignment</i><a href="../module4/advisor_student_claim_merit.php">function</a></div>
+    <div class="nav-item"><i class="material-icons">assignment</i><a href="../module4/advisor_student_claim_merit.php">Function</a></div>
     <!-- option 2 -->
-    <div class="nav-item"><i class="material-icons">list</i><a href="../module4/advisor_student_claim_merit.php">Student Claim Merit</a></div>
+    <div class="nav-item"><i class="material-icons">event</i><a href="../module2/event.php">Events</a></div>
     <!-- option 3 -->
-     <div class="nav-item"><i class="material-icons">list</i><a href="../module2/manageEvent.php">Manage Events</a></div>
+     <div class="nav-item"><i class="material-icons">school</i><a href="../module2/meriteventadvisor.php">Merit</a></div>
     <!-- option 4 -->
+      <div class="nav-item"><i class="material-icons">group</i><a href="../module2/committee.php">Committee</a></div>
+    <!-- option 5 -->
+     
   </div>
 </div>
 

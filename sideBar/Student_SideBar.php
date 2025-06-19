@@ -227,12 +227,13 @@ h2 {
     <div class="nav-item"><i class="material-icons">dashboard</i><a href="../module4/dashboard.php">Dashboard</a></div>
     <div class="nav-divider">COMPONENTS</div>
     <!-- option 1 -->
-    <div class="nav-item"><i class="material-icons">list</i><a href="../module4/meritAwardedList.php">Merit Awarded List</a></div>
+     <div class="nav-item"><i class="material-icons">class</i><a href="../module2/studentevent.php">Event Info</a></div>
     <!-- option 2 -->
-    <div class="nav-item"><i class="material-icons">assignment</i><a href="../module4/claimAward.php">Claim Merit Award</a></div>
+    <div class="nav-item"><i class="material-icons">list</i><a href="../module4/meritAwardedList.php">Merit Awarded List</a></div>
     <!-- option 3 -->
-     <div class="nav-item"><i class="material-icons">list</i><a href="../module2/viewEventInfo.php">View Event Info</a></div>
+    <div class="nav-item"><i class="material-icons">assignment</i><a href="../module4/claimAward.php">Claim Merit Award</a></div>
     <!-- option 4 -->
+
   </div>
 </div>
 

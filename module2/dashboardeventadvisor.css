@@ -1,0 +1,97 @@
+/* General Page Style */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9f9f9;
+  color: #111;
+}
+
+/* Container & Main */
+.container {
+  padding: 20px 40px;
+}
+
+.main-content {
+  padding: 30px 20px;
+}
+
+/* Header */
+.header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 30px;
+}
+
+/* Stats Boxes */
+.stats {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 40px;
+}
+
+.stat-box {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.stat-box strong {
+  font-size: 24px;
+  color: #000;
+}
+
+/* Section Headers */
+.h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  margin-top: 30px;
+}
+
+/* Chart Section */
+.event-status-chart {
+  margin-bottom: 50px;
+}
+
+canvas {
+  background: #fff;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  max-width: 400px;
+}
+
+/* Events Table */
+.upcoming-events table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #f1f3f5;
+  font-weight: 600;
+}
+
+tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+tr:hover {
+  background-color: #f1f1f1;
+}
+
+td[colspan="4"] {
+  text-align: center;
+  font-style: italic;
+  color: #888;
+  padding: 20px;
+}

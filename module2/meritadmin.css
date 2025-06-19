@@ -1,0 +1,118 @@
+/* Reset basic styles */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9f9f9;
+  color: #111;
+}
+
+/* Header styling */
+.header {
+  background-color: #fff;
+  padding: 20px 30px;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 20px;
+}
+
+.header-left h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+/* Main content area */
+.main-content {
+  padding: 20px 40px;
+}
+
+/* Table styling */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #f2f2f2;
+  font-weight: 600;
+}
+
+tr:hover {
+  background-color: #f9f9f9;
+}
+
+/* Status styles */
+.status-cell {
+  font-weight: bold;
+}
+
+.status-Pending {
+  color: #ffc107;
+}
+
+.status-Approved {
+  color: #28a745;
+}
+
+.status-Rejected {
+  color: #dc3545;
+}
+
+/* Button styling */
+.approve-button {
+  padding: 6px 10px;
+  margin-right: 6px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  background-color: #f8f9fa;
+  color: #333;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.approve-button:hover {
+  background-color: #e2e6ea;
+}
+
+.approve-button[data-action="approve"] {
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.approve-button[data-action="reject"] {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+/* MAIN SCROLLABLE SECTION */
+.merit {
+  max-height: 450px; /* adjust based on your screen */
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: #fff;
+  padding: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Optional: make scroll bar look cleaner */
+.merit::-webkit-scrollbar {
+  width: 8px;
+}
+
+.merit::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 10px;
+}
+
+.merit::-webkit-scrollbar-thumb:hover {
+  background-color: #999;
+}

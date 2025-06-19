@@ -1,15 +1,5 @@
 <?php
-// DB connection
-$host = 'localhost';
-$user = 'root';
-$pass = '';
-$db = 'mypetakom';
-$port = 3306;
-
-$conn = new mysqli($host, $user, $pass, $db, $port);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+include '../db_connect.php';
 
 // Fetch list of events for dropdown
 $eventListSql = "SELECT eventID, eventName FROM event ORDER BY eventName ASC";
@@ -42,28 +32,12 @@ $result = $conn->query($sql);
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>MyPetakom - Committee</title>
-    <link rel="stylesheet" href="style/eventadvisor.css">
+    <link rel="stylesheet" href="../module2/committee.css">
 </head>
 <body>
-    <div class="top-heading-container">
-        MyPetakom - Event Advisor
-    </div>
 
-    <div class="container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="logo">
-                <img src="TestImages/UMP-Logo.jpg" alt="UMP Logo">
-            </div>
-            <img src="TestImages/user.png" alt="Profile Picture">
-            <h2>Event Advisor</h2>
-            <a href="eventadvisorprofile.php">Profile</a>
-            <a href="dashboardeventadvisor.php">Dashboard</a>
-            <a href="event.php">Events</a>
-            <a href="meriteventadvisor.php">Merit</a>
-            <a href="committee.php">Committee</a>
-            <a href="graph.php">Attendance</a>
-        </div>
+<?php include "../sideBar/Advisor_SideBar.php";?>
+
 
         <!-- Main Content -->
         <main class="main-content">
@@ -71,7 +45,6 @@ $result = $conn->query($sql);
                 <div class="header-left">
                     <h1>Committee</h1>
                 </div>
-                <a href="signouteventadvisor.php" class="signout-btn">SIGN OUT</a>
             </div>
 
             <section class="committee">

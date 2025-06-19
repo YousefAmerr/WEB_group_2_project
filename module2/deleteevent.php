@@ -1,15 +1,5 @@
 <?php
-// DB connection
-$host = 'localhost';
-$user = 'root';
-$pass = '';
-$db = 'mypetakom';
-$port = 3306;
-
-$conn = new mysqli($host, $user, $pass, $db, $port);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+include '../db_connect.php';
 
 if (!isset($_GET['eventID'])) {
     die("No event ID specified.");
