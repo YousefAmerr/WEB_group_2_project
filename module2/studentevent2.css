@@ -1,0 +1,333 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Main Layout */
+.main-content {
+    padding: 20px;
+    min-height: 100vh;
+    transition: margin-left 0.3s ease;
+}
+
+/* Header Styles */
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.welcome-text {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    font-weight: 300;
+}
+
+/* Section Styles */
+.upcoming-events {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e1e8ed;
+}
+
+.h2 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 25px;
+    position: relative;
+    padding-bottom: 10px;
+}
+
+.h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 2px;
+}
+
+/* Table Styles */
+.events-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.events-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.events-table thead th {
+    padding: 18px 15px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.events-table tbody tr {
+    background: white;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.events-table tbody tr:hover {
+    background: #f8f9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.events-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.events-table tbody td {
+    padding: 16px 15px;
+    font-size: 0.95rem;
+    color: #555;
+    vertical-align: middle;
+}
+
+.events-table tbody td:first-child {
+    font-weight: 600;
+    color: #667eea;
+}
+
+/* Status Styles */
+.status-approved {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+/* No Data Message */
+.no-data {
+    text-align: center;
+    color: #888;
+    font-style: italic;
+    padding: 40px !important;
+    background: #f9f9f9;
+    font-size: 1.1rem;
+}
+
+/* Apply Button Styles */
+.apply-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.apply-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    text-decoration: none;
+    color: white;
+}
+
+.apply-btn:active {
+    transform: translateY(0);
+}
+
+/* Available Events Section */
+.available-events-section {
+    border-top: 4px solid #667eea;
+}
+
+.available-events-section .h2 {
+    color: #667eea;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .main-content {
+        margin-left: 200px;
+    }
+}
+
+@media (max-width: 992px) {
+    .main-content {
+        margin-left: 0;
+        padding: 15px;
+    }
+    
+    .header h1 {
+        font-size: 2rem;
+    }
+    
+    .events-table {
+        font-size: 0.9rem;
+    }
+    
+    .events-table thead th,
+    .events-table tbody td {
+        padding: 12px 8px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .upcoming-events {
+        padding: 20px;
+    }
+    
+    .events-table {
+        font-size: 0.85rem;
+    }
+    
+    .events-table thead th,
+    .events-table tbody td {
+        padding: 10px 6px;
+    }
+    
+    /* Stack table on mobile */
+    .events-table thead {
+        display: none;
+    }
+    
+    .events-table tbody tr {
+        display: block;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+    }
+    
+    .events-table tbody td {
+        display: block;
+        border: none;
+        padding: 5px 0;
+        text-align: left;
+    }
+    
+    .events-table tbody td:before {
+        content: attr(data-label) ": ";
+        font-weight: bold;
+        color: #667eea;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-content {
+        padding: 10px;
+    }
+    
+    .header {
+        padding: 15px;
+    }
+    
+    .header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .upcoming-events {
+        padding: 15px;
+    }
+}
+
+/* Loading Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.upcoming-events {
+    animation: fadeIn 0.6s ease-out;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f3f4;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #5a6fd8;
+}
+
+/* Print Styles */
+@media print {
+    .main-content {
+        margin-left: 0;
+    }
+    
+    .apply-btn {
+        display: none;
+    }
+    
+    .events-table {
+        box-shadow: none;
+    }
+    
+    .header {
+        background: #333 !important;
+        color: white !important;
+    }
+}

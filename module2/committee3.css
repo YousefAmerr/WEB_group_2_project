@@ -1,0 +1,252 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Main Layout */
+.main-content {
+    padding: 20px;
+    min-height: 100vh;
+}
+
+/* Header */
+.header {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.header-left h1 {
+    color: #2c3e50;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+/* Committee Section */
+.committee {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 25px;
+}
+
+.events-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.events-header .h {
+    color: #2c3e50;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.addbutton {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.addbutton:hover {
+    background-color: #0056b3;
+}
+
+/* Filter Form */
+form {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+}
+
+form label {
+    font-weight: 600;
+    color: #495057;
+}
+
+form select {
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+    min-width: 150px;
+    transition: border-color 0.3s ease;
+}
+
+form select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+table thead {
+    background-color: #495057;
+    color: white;
+}
+
+table th {
+    padding: 15px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+table tbody tr {
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s ease;
+}
+
+table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+table tbody tr:last-child {
+    border-bottom: none;
+}
+
+table td {
+    padding: 12px;
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+/* Button Styles */
+.button {
+    display: inline-block;
+    padding: 6px 12px;
+    margin: 2px;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+}
+
+/* Default button (Update) */
+.button {
+    background-color: #28a745;
+}
+
+.button:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+/* Delete button - override with inline styles or add specific class */
+.button[onclick*="Delete"] {
+    background-color: #dc3545;
+}
+
+.button[onclick*="Delete"]:hover {
+    background-color: #c82333;
+}
+
+/* Status Styling */
+td:nth-child(6) {
+    font-weight: 600;
+}
+
+/* Pending Status */
+tr td:nth-child(6)[innerHTML*="Pending"] {
+    color: #fd7e14;
+}
+
+/* Approved Status */
+tr td:nth-child(6)[innerHTML*="Approved"] {
+    color: #28a745;
+}
+
+/* Rejected Status */
+tr td:nth-child(6)[innerHTML*="Rejected"] {
+    color: #dc3545;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        padding: 10px;
+    }
+    
+    .events-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    form select {
+        min-width: 100%;
+    }
+    
+    table {
+        font-size: 12px;
+    }
+    
+    table th,
+    table td {
+        padding: 8px 6px;
+    }
+    
+    .button {
+        padding: 4px 8px;
+        font-size: 11px;
+        margin: 1px;
+    }
+}
+
+@media (max-width: 480px) {
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    .header-left h1 {
+        font-size: 22px;
+    }
+    
+    .events-header .h {
+        font-size: 20px;
+    }
+}

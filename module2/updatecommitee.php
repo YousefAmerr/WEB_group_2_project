@@ -2,7 +2,6 @@
 // DB connection
 include '../db_connect.php';
 
-
 $message = "";
 
 // Check meritApplicationID is passed
@@ -19,7 +18,7 @@ $coordinators = $conn->query("SELECT coordinatorID, coordinatorName FROM petakom
 
 // Fetch existing merit application data to pre-fill the form
 $stmt = $conn->prepare("SELECT * FROM meritapplication WHERE meritApplicationID = ?");
-$stmt->bind_param("s", $meritApplicationID);
+$stmt->bind_param("i", $meritApplicationID);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -34,12 +33,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $studentID = $_POST['studentID'] ?? '';
     $coordinatorID = $_POST['coordinatorID'] ?? '';
     $eventID = $_POST['eventID'] ?? '';
-    $status = $_POST['status'] ?? '';
     $role_type = $_POST['role_type'] ?? '';
 
-    if ($studentID && $coordinatorID && $eventID && $status && $role_type) {
-        $updateStmt = $conn->prepare("UPDATE meritapplication SET studentID = ?, coordinatorID = ?, eventID = ?, status = ?, role_type = ? WHERE meritApplicationID = ?");
-        $updateStmt->bind_param("ssssss", $studentID, $coordinatorID, $eventID, $status, $role_type, $meritApplicationID);
+    if ($studentID && $coordinatorID && $eventID && $role_type) {
+        $updateStmt = $conn->prepare("UPDATE meritapplication SET studentID = ?, coordinatorID = ?, eventID = ?, role_type = ? WHERE meritApplicationID = ?");
+        $updateStmt->bind_param("ssssi", $studentID, $coordinatorID, $eventID, $role_type, $meritApplicationID);
 
         if ($updateStmt->execute()) {
             $message = "Merit application updated successfully.";
@@ -68,7 +66,7 @@ $conn->close();
     <meta name="Basyirah" content="Web Engineering Project - Event Advisor Dashboard">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Update Merit Application - MyPetakom</title>
-    <link rel="stylesheet" href="../module2/updatecommitee.css">
+    <link rel="stylesheet" href="../module2/updatecommitee2.css">
 </head>
 <body>
 
@@ -78,7 +76,7 @@ $conn->close();
         <main class="main-content">
             <div class="header">
                 <div class="header-left">
-                    <h1>Update Merit Application</h1>
+                    <h1>Update Committee</h1>
                 </div>
             </div>
 
@@ -118,14 +116,6 @@ $conn->close();
                                 <?php echo htmlspecialchars($row['eventName']); ?>
                             </option>
                         <?php endforeach; ?>
-                    </select><br /><br />
-                    
-                    <label for="status">Status:</label><br />
-                    <select name="status" id="status" required>
-                        <option value="">-- Select Status --</option>
-                        <option value="Pending" <?php if ($application['status'] == 'Pending') echo 'selected'; ?>>Pending</option>
-                        <option value="Approved" <?php if ($application['status'] == 'Approved') echo 'selected'; ?>>Approved</option>
-                        <option value="Rejected" <?php if ($application['status'] == 'Rejected') echo 'selected'; ?>>Rejected</option>
                     </select><br /><br />
                     
                     <label for="role_type">Role Type:</label><br />

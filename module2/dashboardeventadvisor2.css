@@ -1,0 +1,335 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Container Layout */
+.container {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f5f7fa;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    padding: 30px 40px;
+    margin-left: 0; /* Remove margin since sidebar is separate */
+    background-color: #f5f7fa;
+    min-height: 100vh;
+}
+
+/* Header Section */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.header-left h1 {
+    font-size: 2.8rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0;
+}
+
+/* Stats Section */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+    margin-bottom: 50px;
+    max-width: 800px;
+}
+
+.stat-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px 25px;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.25);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    font-size: 1.1rem;
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+.stat-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.35);
+}
+
+.stat-box strong {
+    display: block;
+    font-size: 3rem;
+    font-weight: 700;
+    margin-top: 15px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Chart Section */
+.event-status-chart {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 50px;
+}
+
+.event-status-chart h2 {
+    color: #2d3748;
+    margin-bottom: 30px;
+    font-size: 2rem;
+    font-weight: 600;
+    text-align: left;
+}
+
+#eventStatusChart {
+    max-width: 600px;
+    max-height: 400px;
+    margin: 0 auto;
+}
+
+/* Events Section */
+.upcoming-events {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+}
+
+.events-header {
+    margin-bottom: 30px;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.events-header h2,
+.h2 {
+    color: #2d3748;
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+table th {
+    padding: 15px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+table tbody tr {
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s ease;
+}
+
+table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+table tbody tr:last-child {
+    border-bottom: none;
+}
+
+table td {
+    padding: 15px 12px;
+    font-size: 0.95rem;
+    color: #495057;
+}
+
+table td:first-child {
+    font-weight: 600;
+    color: #6c757d;
+}
+
+/* Event Level Badges */
+table td:last-child {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+/* Level-specific colors */
+tr td:last-child:contains('NATIONAL') {
+    color: #28a745;
+}
+
+tr td:last-child:contains('STATE') {
+    color: #ffc107;
+}
+
+tr td:last-child:contains('UMPSA') {
+    color: #dc3545;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .main-content {
+        padding: 25px 30px;
+    }
+    
+    .stats {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        max-width: none;
+    }
+}
+
+@media (max-width: 992px) {
+    .main-content {
+        padding: 20px;
+    }
+    
+    .header-left h1 {
+        font-size: 2.2rem;
+    }
+    
+    .stats {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 20px;
+    }
+    
+    .stat-box {
+        padding: 25px 20px;
+    }
+    
+    .stat-box strong {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .stats {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .header-left h1 {
+        font-size: 2rem;
+    }
+    
+    table {
+        font-size: 0.9rem;
+    }
+    
+    table th,
+    table td {
+        padding: 12px 10px;
+    }
+    
+    .event-status-chart,
+    .upcoming-events {
+        padding: 25px;
+    }
+    
+    .main-content {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 576px) {
+    .main-content {
+        padding: 10px;
+    }
+    
+    .header-left h1 {
+        font-size: 1.5rem;
+    }
+    
+    .stat-box {
+        padding: 15px;
+    }
+    
+    .stat-box strong {
+        font-size: 1.8rem;
+    }
+    
+    table th,
+    table td {
+        padding: 8px 6px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Additional utility classes */
+.text-center {
+    text-align: center;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
+
+/* Loading state for chart */
+.chart-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Empty state for table */
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Scrollable table for mobile */
+@media (max-width: 768px) {
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        min-width: 600px;
+    }
+}

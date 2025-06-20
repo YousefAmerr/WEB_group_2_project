@@ -1,0 +1,307 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Main Content Layout */
+.main-content {
+    padding: 20px;
+    min-height: 100vh;
+    width: 100%;
+}
+
+
+/* Header Styles */
+.header {
+    background: white;
+    padding: 20px 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.header-left h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+/* Committee Section */
+.committee {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+/* Events Header */
+.events-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 30px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.events-header .h {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+/* Add Button */
+.addbutton {
+    background: #3498db;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.addbutton:hover {
+    background: #2980b9;
+    transform: translateY(-1px);
+}
+
+/* Filter Form */
+form {
+    padding: 20px 30px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+form label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-right: 10px;
+}
+
+form select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    background: white;
+    cursor: pointer;
+    min-width: 200px;
+}
+
+form select:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+table thead {
+    background: #34495e;
+    color: white;
+}
+
+table thead th {
+    padding: 15px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+table tbody tr {
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s ease;
+}
+
+table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+table tbody tr:nth-child(even) {
+    background-color: #fdfdfd;
+}
+
+table tbody tr:nth-child(even):hover {
+    background-color: #f8f9fa;
+}
+
+table tbody td {
+    padding: 12px;
+    font-size: 14px;
+    color: #2c3e50;
+}
+
+/* Status and Role Styling */
+table tbody td:nth-child(3) { /* Role Type */
+    font-weight: 500;
+}
+
+table tbody td:nth-child(4) { /* Status */
+    color: #27ae60;
+    font-weight: 500;
+}
+
+/* Action Buttons */
+.button {
+    padding: 6px 12px;
+    margin: 0 2px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+/* Update Button - Green */
+.button:first-of-type,
+a[href*='updatecommitee'] {
+    background: #27ae60;
+    color: white;
+}
+
+.button:first-of-type:hover,
+a[href*='updatecommitee']:hover {
+    background: #219a52;
+    transform: translateY(-1px);
+}
+
+/* Delete Button - Red */
+.button:last-of-type,
+a[href*='deletecommitee'] {
+    background: #e74c3c;
+    color: white;
+}
+
+.button:last-of-type:hover,
+a[href*='deletecommitee']:hover {
+    background: #c0392b;
+    transform: translateY(-1px);
+}
+
+/* No Data Message */
+table tbody td[colspan] {
+    text-align: center;
+    padding: 40px;
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .main-content {
+        margin-left: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        padding: 15px;
+    }
+    
+    .events-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    table {
+        font-size: 12px;
+    }
+    
+    table thead th,
+    table tbody td {
+        padding: 8px 6px;
+    }
+    
+    .button {
+        padding: 4px 8px;
+        font-size: 11px;
+        margin: 1px;
+    }
+    
+    form {
+        padding: 15px 20px;
+    }
+    
+    form select {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-left h1 {
+        font-size: 24px;
+    }
+    
+    .events-header .h {
+        font-size: 20px;
+    }
+    
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    .addbutton {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+}
+
+/* Additional Utility Classes */
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
+
+/* Loading State */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Focus States for Accessibility */
+.addbutton:focus,
+.button:focus,
+select:focus {
+    outline: 2px solid #3498db;
+    outline-offset: 2px;
+}
+
