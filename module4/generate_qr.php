@@ -2,10 +2,6 @@
 // Include the phpqrcode library
 require_once 'phpqrcode/qrlib.php';
 
-// Enable error reporting for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 // Get student ID from URL parameter
 $studentID = $_GET['student_id'] ?? '';
 $display = $_GET['display'] ?? false;
@@ -26,16 +22,16 @@ try {
     if (!class_exists('QRcode')) {
         throw new Exception('PHPQRCode library not found. Please check the library path.');
     }
-    
+
     // Create the URL that the QR code will point to
     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'];
-    
+
     // Get the current directory path
     $current_dir = dirname($_SERVER['PHP_SELF']);
     $base_url = $protocol . '://' . $host . $current_dir;
     $target_url = $base_url . '/student_info.php?student_id=' . urlencode($studentID);
-    
+
     // Create directory for QR codes if it doesn't exist
     $qr_dir = __DIR__ . '/qr_codes/';
     if (!file_exists($qr_dir)) {
@@ -43,7 +39,7 @@ try {
             throw new Exception('Failed to create QR codes directory: ' . $qr_dir);
         }
     }
-    
+
     // Check if directory is writable
     if (!is_writable($qr_dir)) {
         // Try to change permissions
@@ -52,12 +48,12 @@ try {
             throw new Exception('QR codes directory is not writable: ' . $qr_dir);
         }
     }
-    
+
     // Generate unique filename for the QR code using student ID
     $safe_student_id = preg_replace('/[^a-zA-Z0-9]/', '_', $studentID);
     $filename = $qr_dir . 'student_' . $safe_student_id . '_qr.png';
     $relative_filename = 'qr_codes/student_' . $safe_student_id . '_qr.png';
-    
+
     // Check if QR code already exists and is recent (less than 24 hours old)
     $regenerate = true;
     if (file_exists($filename)) {
@@ -67,28 +63,24 @@ try {
             $regenerate = false;
         }
     }
-    
+
     if ($regenerate) {
         // QR code parameters
         $errorCorrectionLevel = 'L'; // Low error correction level
         $matrixPointSize = 6; // Increased size for better readability
         $margin = 2; // Margin around QR code
-        
+
         // Generate QR code
         QRcode::png($target_url, $filename, $errorCorrectionLevel, $matrixPointSize, $margin);
-        
+
         // Add a small delay to ensure file is written
         usleep(100000); // 100ms delay
     }
-    
     // Verify file exists
     if (!file_exists($filename)) {
         throw new Exception('QR code file was not created successfully: ' . $filename);
     }
-    
-    // Log successful generation (for debugging)
-    error_log("QR Code generated for student $studentID at: $filename");
-    
+
     if ($display) {
         // Display the QR code image directly
         if (file_exists($filename)) {
@@ -122,10 +114,7 @@ try {
             ]);
         }
     }
-    
 } catch (Exception $e) {
-    error_log("QR Code generation error for student $studentID: " . $e->getMessage());
-    
     if ($display) {
         header('Content-Type: text/html');
         echo '<div style="padding: 20px; text-align: center; color: #dc3545;">Error: ' . htmlspecialchars($e->getMessage()) . '</div>';
@@ -138,4 +127,3 @@ try {
         ]);
     }
 }
-?>

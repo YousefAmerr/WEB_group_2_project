@@ -24,40 +24,53 @@ if (empty($studentID)) {
     exit();
 }
 
-// Fetch dashboard data
-$result = $conn->query("SELECT COALESCE(SUM(meritPoints), 0) as total FROM meritaward WHERE studentID = '$studentID'");
-$totalPoints = $result->fetch_assoc()['total'];
+// Fetch dashboard data using prepared statements
+$stmt = $conn->prepare("SELECT COALESCE(SUM(meritPoints), 0) as total FROM meritaward WHERE studentID = ?");
+$stmt->bind_param("s", $studentID);
+$stmt->execute();
+$totalPoints = $stmt->get_result()->fetch_assoc()['total'];
+$stmt->close();
 
-$result = $conn->query("SELECT COUNT(DISTINCT eventID) as count FROM meritaward WHERE studentID = '$studentID'");
-$eventsCount = $result->fetch_assoc()['count'];
+$stmt = $conn->prepare("SELECT COUNT(DISTINCT eventID) as count FROM meritaward WHERE studentID = ?");
+$stmt->bind_param("s", $studentID);
+$stmt->execute();
+$eventsCount = $stmt->get_result()->fetch_assoc()['count'];
+$stmt->close();
 
 $avgPoints = $eventsCount > 0 ? round($totalPoints / $eventsCount, 1) : 0;
 
-$result = $conn->query("SELECT COUNT(*) as count FROM meritclaim WHERE studentID = '$studentID' AND status = 'Pending'");
-$pendingClaims = $result->fetch_assoc()['count'];
+$stmt = $conn->prepare("SELECT COUNT(*) as count FROM meritclaim WHERE studentID = ? AND status = 'Pending'");
+$stmt->bind_param("s", $studentID);
+$stmt->execute();
+$pendingClaims = $stmt->get_result()->fetch_assoc()['count'];
+$stmt->close();
 
-// Chart data - Event Level
-$result = $conn->query("
+// Chart data - Event Level using prepared statements
+$stmt = $conn->prepare("
     SELECT e.eventLevel, COALESCE(SUM(ma.meritPoints), 0) as points 
     FROM meritaward ma 
     JOIN event e ON ma.eventID = e.eventID 
-    WHERE ma.studentID = '$studentID' 
+    WHERE ma.studentID = ? 
     GROUP BY e.eventLevel
 ");
+$stmt->bind_param("s", $studentID);
+$stmt->execute();
+$result = $stmt->get_result();
 $eventLevelData = [];
 while ($row = $result->fetch_assoc()) {
     $eventLevelData[] = $row;
 }
+$stmt->close();
 $levelLabels = array_column($eventLevelData, 'eventLevel');
 $levelPoints = array_column($eventLevelData, 'points');
 
 $roleData = [];
 
-// Get committee points 
-$result = $conn->query("
+// Get committee points using prepared statements
+$stmt = $conn->prepare("
     SELECT COALESCE(SUM(mw.meritPoints), 0) as points
     FROM meritaward mw
-    WHERE mw.studentID = '$studentID'
+    WHERE mw.studentID = ?
     AND EXISTS (
         SELECT 1 FROM meritapplication ma 
         WHERE ma.studentID = mw.studentID 
@@ -66,13 +79,16 @@ $result = $conn->query("
         AND ma.role_type = 'committee'
     )
 ");
-$committeePoints = $result->fetch_assoc()['points'];
+$stmt->bind_param("s", $studentID);
+$stmt->execute();
+$committeePoints = $stmt->get_result()->fetch_assoc()['points'];
+$stmt->close();
 
-// Get main-committee points 
-$result = $conn->query("
+// Get main-committee points using prepared statements
+$stmt = $conn->prepare("
     SELECT COALESCE(SUM(mw.meritPoints), 0) as points
     FROM meritaward mw
-    WHERE mw.studentID = '$studentID'
+    WHERE mw.studentID = ?
     AND EXISTS (
         SELECT 1 FROM meritapplication ma 
         WHERE ma.studentID = mw.studentID 
@@ -81,13 +97,16 @@ $result = $conn->query("
         AND ma.role_type = 'main-committee'
     )
 ");
-$mainCommitteePoints = $result->fetch_assoc()['points'];
+$stmt->bind_param("s", $studentID);
+$stmt->execute();
+$mainCommitteePoints = $stmt->get_result()->fetch_assoc()['points'];
+$stmt->close();
 
-// Get participant points 
-$result = $conn->query("
+// Get participant points using prepared statements
+$stmt = $conn->prepare("
     SELECT COALESCE(SUM(mw.meritPoints), 0) as points
     FROM meritaward mw
-    WHERE mw.studentID = '$studentID'
+    WHERE mw.studentID = ?
     AND NOT EXISTS (
         SELECT 1 FROM meritapplication ma 
         WHERE ma.studentID = mw.studentID 
@@ -96,7 +115,10 @@ $result = $conn->query("
         AND ma.role_type IN ('committee', 'main-committee')
     )
 ");
-$participantPoints = $result->fetch_assoc()['points'];
+$stmt->bind_param("s", $studentID);
+$stmt->execute();
+$participantPoints = $stmt->get_result()->fetch_assoc()['points'];
+$stmt->close();
 
 // Build role data array (only include roles with points > 0)
 if ($committeePoints > 0) {
@@ -112,41 +134,53 @@ if ($participantPoints > 0) {
 $roleLabels = array_column($roleData, 'role_type');
 $rolePoints = array_column($roleData, 'points');
 
-// Recent activities
-$result = $conn->query("
+// Recent activities using prepared statements
+$stmt = $conn->prepare("
     SELECT ma.meritPoints, e.eventName, e.eventLevel, ma.ma_ID as id
     FROM meritaward ma 
     JOIN event e ON ma.eventID = e.eventID 
-    WHERE ma.studentID = '$studentID' 
+    WHERE ma.studentID = ? 
     ORDER BY ma.ma_ID DESC 
     LIMIT 4
 ");
+$stmt->bind_param("s", $studentID);
+$stmt->execute();
+$result = $stmt->get_result();
 
 $activities = [];
 while ($row = $result->fetch_assoc()) {
     $activities[] = $row;
 }
+$stmt->close();
 
-$result = $conn->query("
+$stmt = $conn->prepare("
     SELECT e.eventName, mc.claim_date, mc.status 
     FROM meritclaim mc 
     JOIN event e ON mc.eventID = e.eventID 
-    WHERE mc.studentID = '$studentID' AND mc.status = 'Pending' 
+    WHERE mc.studentID = ? AND mc.status = 'Pending' 
     ORDER BY mc.claim_date DESC 
     LIMIT 1
 ");
+$stmt->bind_param("s", $studentID);
+$stmt->execute();
+$result = $stmt->get_result();
 $claims = [];
 while ($row = $result->fetch_assoc()) {
     $claims[] = $row;
 }
+$stmt->close();
 
-// Get student name for display 
-$result = $conn->query("SELECT studentName FROM student WHERE studentID = '$studentID'");
-$studentName = $result->fetch_assoc()['studentName'] ?? 'Student';
+// Get student name for display using prepared statements
+$stmt = $conn->prepare("SELECT studentName FROM student WHERE studentID = ?");
+$stmt->bind_param("s", $studentID);
+$stmt->execute();
+$studentName = $stmt->get_result()->fetch_assoc()['studentName'] ?? 'Student';
+$stmt->close();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -156,6 +190,7 @@ $studentName = $result->fetch_assoc()['studentName'] ?? 'Student';
     <link rel="stylesheet" href="../sideBar/side.css" />
     <link rel="stylesheet" href="css/dashboard.css" />
 </head>
+
 <body>
     <?php include '../sideBar/Student_SideBar.php'; ?>
 
@@ -206,79 +241,88 @@ $studentName = $result->fetch_assoc()['studentName'] ?? 'Student';
 
         <div class="recent-activities">
             <h3>Recent Activities</h3>
-            
-            <?php foreach($claims as $claim): ?>
-            <div class="activity-item">
-                <div class="activity-icon claim">C</div>
-                <div class="activity-content">
-                    <div class="activity-title">Merit Claim Pending</div>
-                    <div class="activity-desc">Application for <?= htmlspecialchars($claim['eventName']) ?> under review</div>
-                    <div class="activity-date"><?= date('M j, Y', strtotime($claim['claim_date'])) ?></div>
+
+            <?php foreach ($claims as $claim): ?>
+                <div class="activity-item">
+                    <div class="activity-icon claim">C</div>
+                    <div class="activity-content">
+                        <div class="activity-title">Merit Claim Pending</div>
+                        <div class="activity-desc">Application for <?= htmlspecialchars($claim['eventName']) ?> under review</div>
+                        <div class="activity-date"><?= date('M j, Y', strtotime($claim['claim_date'])) ?></div>
+                    </div>
                 </div>
-            </div>
             <?php endforeach; ?>
 
-            <?php foreach($activities as $activity): ?>
-            <div class="activity-item">
-                <div class="activity-icon merit">M</div>
-                <div class="activity-content">
-                    <div class="activity-title">Merit Points Awarded - <?= htmlspecialchars($activity['eventLevel']) ?> Event</div>
-                    <div class="activity-desc"><?= $activity['meritPoints'] ?> points for <?= htmlspecialchars($activity['eventName']) ?></div>
-                    <div class="activity-date"><?= date('M j, Y') ?></div>
+            <?php foreach ($activities as $activity): ?>
+                <div class="activity-item">
+                    <div class="activity-icon merit">M</div>
+                    <div class="activity-content">
+                        <div class="activity-title">Merit Points Awarded - <?= htmlspecialchars($activity['eventLevel']) ?> Event</div>
+                        <div class="activity-desc"><?= $activity['meritPoints'] ?> points for <?= htmlspecialchars($activity['eventName']) ?></div>
+                        <div class="activity-date"><?= date('M j, Y') ?></div>
+                    </div>
                 </div>
-            </div>
             <?php endforeach; ?>
         </div>
     </div>
-
     <script>
         // Chart data
-var levelLabels = [<?php foreach($levelLabels as $label) echo "'".$label."'".($label === end($levelLabels) ? '' : ','); ?>];
-var levelPoints = [<?php foreach($levelPoints as $point) echo $point.($point === end($levelPoints) ? '' : ','); ?>];
-var roleLabels = [<?php foreach($roleLabels as $label) echo "'".$label."'".($label === end($roleLabels) ? '' : ','); ?>];
-var rolePoints = [<?php foreach($rolePoints as $point) echo $point.($point === end($rolePoints) ? '' : ','); ?>];
+        const levelLabels = <?php echo json_encode($levelLabels); ?>;
+        const levelPoints = <?php echo json_encode($levelPoints); ?>;
+        const roleLabels = <?php echo json_encode($roleLabels); ?>;
+        const rolePoints = <?php echo json_encode($rolePoints); ?>;
 
-// Event Level Chart
-new Chart(document.getElementById('eventLevelChart'), {
-    type: 'doughnut',
-    data: {
-        labels: levelLabels,
-        datasets: [{
-            data: levelPoints,
-            backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe']
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        aspectRatio: 2.0,
-        plugins: {
-            legend: {
-                position: 'bottom'
+        // Event Level Chart
+        new Chart(document.getElementById('eventLevelChart'), {
+            type: 'doughnut',
+            data: {
+                labels: levelLabels,
+                datasets: [{
+                    data: levelPoints,
+                    backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 2.0,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
             }
-        }
-    }
-});
+        });
 
-// Role Type Chart
-new Chart(document.getElementById('roleTypeChart'), {
-    type: 'bar',
-    data: {
-        labels: roleLabels,
-        datasets: [{
-            data: rolePoints,
-            backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe']
-        }]
-    }
-});
+        // Role Type Chart
+        new Chart(document.getElementById('roleTypeChart'), {
+            type: 'bar',
+            data: {
+                labels: roleLabels,
+                datasets: [{
+                    data: rolePoints,
+                    backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
 
-// Simple animations
-window.onload = function() {
-    var cards = document.querySelectorAll('.stat-card');
-    for(var i = 0; i < cards.length; i++) {
-        cards[i].style.opacity = '1';
-    }
-};
+        // Simple animations
+        window.onload = function() {
+            const cards = document.querySelectorAll('.stat-card');
+            cards.forEach(card => {
+                card.style.opacity = '1';
+            });
+        };
     </script>
 </body>
+
 </html>

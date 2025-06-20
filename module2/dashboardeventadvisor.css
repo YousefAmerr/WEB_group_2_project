@@ -5,15 +5,30 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #f9f9f9;
   color: #111;
+  overflow: hidden;
+  /* No scrolling on body */
+}
+
+/* Prevent additional scrollbars on content elements */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  /* Allow natural scrolling behavior */
 }
 
 /* Container & Main */
 .container {
   padding: 20px 40px;
+  width: 100%;
+  /* Allow content to flow naturally */
 }
 
 .main-content {
   padding: 30px 20px;
+  /* Remove height constraints that might prevent scrolling */
 }
 
 /* Header */
@@ -63,14 +78,25 @@ canvas {
 }
 
 /* Events Table */
+.upcoming-events {
+  margin-bottom: 40px;
+  overflow-x: auto;
+  /* Allow horizontal scroll only for table if needed */
+}
+
 .upcoming-events table {
   width: 100%;
   border-collapse: collapse;
   background-color: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+  min-width: 600px;
+  /* Minimum width to ensure table readability */
 }
 
-th, td {
+th,
+td {
   padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid #ddd;

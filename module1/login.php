@@ -35,7 +35,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($user_type === 'student') {
                 header("Location: ../module4/dashboard.php");
             } elseif ($user_type === 'advisor') {
-                header("Location: ../module2/dashboardeventadvisor.php");
+                header("Location: ../module2/dashboardAdvisor.php");
             } elseif ($user_type === 'coordinator') {
                 header("Location: ../module3/coordinator/attendance_report.php");
             }

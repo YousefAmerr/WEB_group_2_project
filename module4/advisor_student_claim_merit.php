@@ -27,17 +27,25 @@ $stmt->close();
 if ($_POST && isset($_POST['action']) && isset($_POST['claim_id'])) {
     $claim_id = $_POST['claim_id'];
     $action = $_POST['action'];
-    
+
     if ($action === 'approve' || $action === 'reject') {
         $new_status = ($action === 'approve') ? 'Approved' : 'Rejected';
 
         $update_sql = "UPDATE meritclaim SET status = ? WHERE claim_id = ?";
         $update_stmt = $conn->prepare($update_sql);
         $update_stmt->bind_param("si", $new_status, $claim_id);
-        
         if ($update_stmt->execute()) {
             $message = "Claim has been " . strtolower($new_status) . " successfully.";
             $message_type = "success";
+
+            // If claim is approved, automatically process it for merit award
+            if ($action === 'approve') {
+                include 'merit_functions.php';
+                $results = autoProcessMeritClaims();
+                if ($results['total'] > 0) {
+                    $message .= " Merit award has been automatically processed.";
+                }
+            }
         } else {
             $message = "Error updating claim status.";
             $message_type = "error";
@@ -49,11 +57,13 @@ if ($_POST && isset($_POST['action']) && isset($_POST['claim_id'])) {
 // filter parameters
 $statusFilter = isset($_GET['status']) ? $_GET['status'] : '';
 $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
+$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -61,6 +71,7 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     <link rel="stylesheet" href="css/advisor.css" />
 </head>
+
 <body>
     <div class="main-content">
         <h1 class="page_title">Student Merit Claims Review</h1>
@@ -96,13 +107,20 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                 <div class="stat-label">Rejected</div>
             </div>
         </div>
-
         <div class="filters-container">
             <form method="GET" action="">
                 <div class="filter-row">
                     <div class="filter-group">
+                        <label for="search">Search Claims:</label>
+                        <input type="text"
+                            id="search"
+                            name="search"
+                            placeholder="Search by student, email, event name..."
+                            value="<?php echo htmlspecialchars($searchQuery); ?>">
+                    </div>
+                    <div class="filter-group">
                         <label for="status">Filter by Status:</label>
-                        <select id="status" name="status" onchange="this.form.submit()">
+                        <select id="status" name="status">
                             <option value="">All Status</option>
                             <option value="Pending" <?php echo ($statusFilter == 'Pending') ? 'selected' : ''; ?>>Pending</option>
                             <option value="Approved" <?php echo ($statusFilter == 'Approved') ? 'selected' : ''; ?>>Approved</option>
@@ -111,7 +129,7 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                     </div>
                     <div class="filter-group">
                         <label for="student">Filter by Student:</label>
-                        <select id="student" name="student" onchange="this.form.submit()">
+                        <select id="student" name="student">
                             <option value="">All Students</option>
                             <?php
                             $students_sql = "SELECT DISTINCT s.studentID, s.studentName FROM student s 
@@ -127,50 +145,85 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                             ?>
                         </select>
                     </div>
+                    <div class="filter-group">
+                        <button type="submit" class="search-btn">
+                            <i class="material-icons">search</i>
+                            Search
+                        </button>
+                        <a href="?" class="clear-btn">
+                            <i class="material-icons">clear</i>
+                            Clear
+                        </a>
+                    </div>
                 </div>
             </form>
         </div>
 
         <div class="claims-container">
             <?php
-            try {
-                // Build query with filters
+            try {                // Build query with filters
                 $sql = "SELECT mc.*, s.studentName, s.studentEmail, e.eventName, e.eventLevel 
                         FROM meritclaim mc
                         JOIN student s ON mc.studentID = s.studentID
                         LEFT JOIN event e ON mc.eventID = e.eventID
                         WHERE 1=1";
-                
+
                 $params = [];
                 $types = "";
-                
+
                 if (!empty($statusFilter)) {
                     $sql .= " AND mc.status = ?";
                     $params[] = $statusFilter;
                     $types .= "s";
                 }
-                
+
                 if (!empty($studentFilter)) {
                     $sql .= " AND mc.studentID = ?";
                     $params[] = $studentFilter;
                     $types .= "s";
                 }
-                
+
+                // Add search filter if provided
+                if (!empty($searchQuery)) {
+                    $sql .= " AND (s.studentName LIKE ? OR s.studentEmail LIKE ? OR e.eventName LIKE ? OR e.eventLevel LIKE ?)";
+                    $searchParam = "%{$searchQuery}%";
+                    $params[] = $searchParam;
+                    $params[] = $searchParam;
+                    $params[] = $searchParam;
+                    $params[] = $searchParam;
+                    $types .= "ssss";
+                }
+
                 $sql .= " ORDER BY mc.claim_date DESC";
-                
+
                 $stmt = $conn->prepare($sql);
                 if (!empty($params)) {
                     $stmt->bind_param($types, ...$params);
                 }
                 $stmt->execute();
                 $result = $stmt->get_result();
-                
                 if ($result->num_rows === 0) {
                     echo '<div class="no-claims">
                             <i class="material-icons">assignment</i>
-                            <h3>No Claims Found</h3>
-                            <p>There are no merit claims matching your current filters.</p>
-                          </div>';
+                            <h3>No Claims Found</h3>';
+
+                    if (!empty($searchQuery) || !empty($statusFilter) || !empty($studentFilter)) {
+                        echo '<p>No merit claims match your current search and filter criteria.</p>';
+                        if (!empty($searchQuery)) {
+                            echo '<p>Search: "<strong>' . htmlspecialchars($searchQuery) . '</strong>"</p>';
+                        }
+                        if (!empty($statusFilter)) {
+                            echo '<p>Status: <strong>' . htmlspecialchars($statusFilter) . '</strong></p>';
+                        }
+                        if (!empty($studentFilter)) {
+                            echo '<p>Student Filter: <strong>Applied</strong></p>';
+                        }
+                        echo '<p><a href="?" style="color: #007bff; text-decoration: none;">Clear all filters</a></p>';
+                    } else {
+                        echo '<p>There are no merit claims to review at this time.</p>';
+                    }
+
+                    echo '</div>';
                 } else {
                     while ($row = $result->fetch_assoc()) {
                         $claimId = $row['claim_id'];
@@ -181,9 +234,9 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                         $status = $row['status'];
                         $claimDate = date('M d, Y H:i', strtotime($row['claim_date']));
                         $supportDoc = $row['supporingDoc'];
-                        
+
                         $statusClass = 'status-' . strtolower($status);
-                        
+
                         echo "
                         <div class='claim-card'>
                             <div class='claim-header'>
@@ -218,14 +271,14 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                             </div>
                             
                             <div class='claim-actions'>";
-                        
+
                         if (!empty($supportDoc)) {
                             echo "<button class='btn btn-view' onclick='viewDocument(\"{$supportDoc}\", {$claimId})'>
                                     <i class='material-icons'>visibility</i>
                                     View Document
                                   </button>";
                         }
-                        
+
                         // Action buttons only for pending claims
                         if ($status === 'Pending') {
                             echo "<form method='POST' style='display: inline;' onsubmit='return confirmAction(\"approve\")'>
@@ -246,7 +299,7 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                                     </button>
                                   </form>";
                         }
-                        
+
                         echo "    </div>
                         </div>";
                     }
@@ -293,23 +346,23 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
             const modalClaimId = document.getElementById('modalClaimId');
             const documentImage = document.getElementById('documentImage');
             const documentError = document.getElementById('documentError');
-            
+
             modalClaimId.textContent = claimId;
-            
+
             documentImage.style.display = 'none';
             documentError.style.display = 'none';
-            
+
             documentImage.onload = function() {
                 documentImage.style.display = 'block';
             };
-            
+
             documentImage.onerror = function() {
                 documentError.style.display = 'block';
             };
-            
+
             // Fix the path - use forward slash and correct relative path
             documentImage.src = 'uploads/meritclaim/' + filename;
-            
+
             modal.style.display = 'block';
         }
 
@@ -324,10 +377,9 @@ $studentFilter = isset($_GET['student']) ? $_GET['student'] : '';
                 modal.style.display = 'none';
             }
         }
-
-        
     </script>
 </body>
+
 </html>
 
 <?php

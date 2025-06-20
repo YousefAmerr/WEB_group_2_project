@@ -1,114 +1,52 @@
 <?php
-session_start();
-require_once 'config.php';
+include('includes/session.php');
+include('includes/db_connection.php');
 
-// Check if user is logged in as advisor
-if (!isset($_SESSION['adUsername']) || $_SESSION['user_type'] !== 'advisor') {
-    header("Location: index.php");
-    exit();
+header('Content-Type: text/csv; charset=utf-8');
+header('Content-Disposition: attachment; filename=attendance_export.csv');
+
+$output = fopen("php://output", "w");
+
+// Column headers
+fputcsv($output, ['Student Name', 'Event Name', 'Date', 'Status']);
+
+if ($role === 'advisor') {
+    $stmt = $conn->prepare("
+        SELECT st.studentName, e.eventName, ac.attendance_date, ac.status
+        FROM attendancecslot ac
+        JOIN student st ON ac.studentID = st.studentID
+        JOIN attendance s ON ac.attendanceID = s.attendanceID
+        JOIN event e ON s.eventID = e.eventID
+        WHERE s.advisorID = ?
+    ");
+    $stmt->bind_param("s", $_SESSION['advisorID']);
+} elseif ($role === 'coordinator') {
+    $stmt = $conn->prepare("
+        SELECT st.studentName, e.eventName, ac.attendance_date, ac.status
+        FROM attendancecslot ac
+        JOIN student st ON ac.studentID = st.studentID
+        JOIN attendance s ON ac.attendanceID = s.attendanceID
+        JOIN event e ON s.eventID = e.eventID
+    ");
+} else {
+    echo "You are not authorized to export attendance.";
+    exit;
 }
 
-$advisorID = $_SESSION['advisorID'];
+if ($stmt && $stmt->execute()) {
+    $result = $stmt->get_result();
 
-// Get filter parameters
-$selected_event = isset($_GET['event_id']) ? $_GET['event_id'] : '';
-$date_from = isset($_GET['date_from']) ? $_GET['date_from'] : '';
-$date_to = isset($_GET['date_to']) ? $_GET['date_to'] : '';
-
-// Build query for attendance report
-$where_conditions = ["e.advisorID = ?"];
-$params = [$advisorID];
-
-if ($selected_event) {
-    $where_conditions[] = "e.eventID = ?";
-    $params[] = $selected_event;
+    while ($row = $result->fetch_assoc()) {
+        fputcsv($output, [
+            $row['studentName'],
+            $row['eventName'],
+            $row['attendance_date'],
+            $row['status']
+        ]);
+    }
+} else {
+    fputcsv($output, ["Error retrieving data."]);
 }
 
-if ($date_from) {
-    $where_conditions[] = "ac.attendance_date >= ?";
-    $params[] = $date_from;
-}
-
-if ($date_to) {
-    $where_conditions[] = "ac.attendance_date <= ?";
-    $params[] = $date_to;
-}
-
-$where_clause = implode(" AND ", $where_conditions);
-
-// Get attendance data
-$stmt = $pdo->prepare("SELECT 
-    e.eventName,
-    e.eventLocation,
-    e.eventLevel,
-    s.studentName,
-    s.studentCard,
-    s.studentEmail,
-    ac.attendance_date,
-    ac.status,
-    a.attendanceDate as session_date
-FROM attendancecslot ac
-JOIN attendance a ON ac.attendanceID = a.attendanceID
-JOIN event e ON a.eventID = e.eventID
-JOIN student s ON ac.studentID = s.studentID
-WHERE $where_clause
-ORDER BY ac.attendance_date DESC, e.eventName, s.studentName");
-
-$stmt->execute($params);
-$attendance_records = $stmt->fetchAll();
-
-// Set headers for Excel download
-header('Content-Type: application/vnd.ms-excel');
-header('Content-Disposition: attachment; filename="attendance_report_' . date('Y-m-d') . '.xls"');
-header('Pragma: no-cache');
-header('Expires: 0');
-
-// Output Excel content
-echo '<table border="1">';
-echo '<tr>';
-echo '<th colspan="8" style="text-align: center; font-size: 16px; font-weight: bold;">MyPetakom Attendance Report</th>';
-echo '</tr>';
-echo '<tr>';
-echo '<th colspan="8" style="text-align: center;">Generated on: ' . date('d M Y H:i:s') . '</th>';
-echo '</tr>';
-echo '<tr><td colspan="8"></td></tr>'; // Empty row
-
-// Headers
-echo '<tr style="background-color: #f2f2f2; font-weight: bold;">';
-echo '<th>Event Name</th>';
-echo '<th>Location</th>';
-echo '<th>Level</th>';
-echo '<th>Student Name</th>';
-echo '<th>Student Card</th>';
-echo '<th>Email</th>';
-echo '<th>Check-in Date</th>';
-echo '<th>Status</th>';
-echo '</tr>';
-
-// Data rows
-foreach ($attendance_records as $record) {
-    echo '<tr>';
-    echo '<td>' . htmlspecialchars($record['eventName']) . '</td>';
-    echo '<td>' . htmlspecialchars($record['eventLocation']) . '</td>';
-    echo '<td>' . htmlspecialchars($record['eventLevel']) . '</td>';
-    echo '<td>' . htmlspecialchars($record['studentName']) . '</td>';
-    echo '<td>' . htmlspecialchars($record['studentCard']) . '</td>';
-    echo '<td>' . htmlspecialchars($record['studentEmail']) . '</td>';
-    echo '<td>' . date('d M Y', strtotime($record['attendance_date'])) . '</td>';
-    echo '<td>' . htmlspecialchars($record['status']) . '</td>';
-    echo '</tr>';
-}
-
-echo '</table>';
-
-// Summary section
-echo '<br><br>';
-echo '<table border="1">';
-echo '<tr>';
-echo '<th colspan="2" style="text-align: center; font-size: 14px; font-weight: bold;">Report Summary</th>';
-echo '</tr>';
-echo '<tr><td><strong>Total Records:</strong></td><td>' . count($attendance_records) . '</td></tr>';
-echo '<tr><td><strong>Export Date:</strong></td><td>' . date('d M Y H:i:s') . '</td></tr>';
-echo '<tr><td><strong>Generated By:</strong></td><td>' . htmlspecialchars($_SESSION['adUsername']) . '</td></tr>';
-echo '</table>';
-?>
+fclose($output);
+exit;

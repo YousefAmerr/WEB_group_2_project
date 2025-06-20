@@ -18,8 +18,13 @@ $sql = "
     WHERE 1=1
 ";
 
+$params = [];
+$types = "";
+
 if ($selectedEventID != '') {
-    $sql .= " AND ma.eventID = '" . $conn->real_escape_string($selectedEventID) . "'";
+    $sql .= " AND ma.eventID = ?";
+    $params[] = $selectedEventID;
+    $types .= "s";
 }
 
 if ($selectedStatus != '') {
@@ -28,25 +33,32 @@ if ($selectedStatus != '') {
 
 $sql .= " ORDER BY ma.meritApplicationID DESC";
 
-$result = $conn->query($sql);
+$stmt = $conn->prepare($sql);
+if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+}
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MyPetakom - Committee</title>
     <link rel="stylesheet" href="../module2/committee3.css">
 
 </head>
+
 <body>
 
-<?php include "../sideBar/Advisor_SideBar.php";?>
+    <?php include "../sideBar/Advisor_SideBar.php"; ?>
 
-
-        <!-- Main Content -->
-        <main class="main-content">
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container">
             <div class="header">
                 <div class="header-left">
                     <h1>Committee</h1>
@@ -123,7 +135,13 @@ $result = $conn->query($sql);
                     </tbody>
                 </table>
             </section>
-        </main>
+        </div>
     </div>
 </body>
+
 </html>
+
+<?php
+$stmt->close();
+$conn->close();
+?>
