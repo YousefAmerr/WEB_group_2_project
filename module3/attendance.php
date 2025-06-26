@@ -50,7 +50,7 @@ $params = [];
 $types = '';
 
 if ($search) {
-    $conditions[] = "(s.first_name LIKE ? OR s.last_name LIKE ? OR s.student_id LIKE ?)";
+    $conditions[] = "(s.first_name LIKE ? OR s.last_name LIKE ? OR s.studentID LIKE ?)";
     $params[] = "%$search%";
     $params[] = "%$search%";
     $params[] = "%$search%";
@@ -75,7 +75,7 @@ $where_clause = $conditions ? 'WHERE ' . implode(' AND ', $conditions) : '';
 
 // Get total records for pagination
 $count_sql = "SELECT COUNT(*) FROM attendance a 
-              JOIN student s ON a.student_id = s.studentID 
+              JOIN student s ON a.studentID = s.studentID 
               JOIN subjects sub ON a.subject_id = sub.id $where_clause";
 $count_stmt = $conn->prepare($count_sql);
 if (!$count_stmt) {
@@ -92,7 +92,7 @@ $total_pages = ceil($total_records / $records_per_page);
 $sql = "SELECT a.*, s.studentName, s.studentID as student_number,
                sub.subject_name, sub.subject_code
         FROM attendance a
-        JOIN student s ON a.student_id = s.studentID
+        JOIN student s ON a.studentID = s.studentID
         JOIN subjects sub ON a.subject_id = sub.id
         $where_clause
         ORDER BY a.attendance_date DESC, a.created_at DESC
@@ -124,7 +124,7 @@ $stats_sql = "SELECT
     SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as late_count,
     SUM(CASE WHEN status = 'excused' THEN 1 ELSE 0 END) as excused_count
 FROM attendance a
-JOIN student s ON a.student_id = s.studentID
+JOIN students s ON a.student_id = s.studentID
 JOIN subjects sub ON a.subject_id = sub.id
 $where_clause";
 $stats_stmt = $conn->prepare($stats_sql);
@@ -383,9 +383,6 @@ $stats_stmt->close();
         <div class="quick-actions">
             <a href="add_attendance.php" class="btn btn-primary">
                 <i class="fas fa-plus me-2"></i>Add Attendance
-            </a>
-            <a href="bulk_attendance.php" class="btn btn-success">
-                <i class="fas fa-users me-2"></i>Bulk Attendance
             </a>
             <a href="create_attendance_slot.php" class="btn btn-info">
                 <i class="fas fa-clock me-2"></i>Create Time Slot

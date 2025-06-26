@@ -17,9 +17,6 @@ if ($role === 'student') {
     include_once 'advisor_dashboard.php';
 }
 
-$database = new Database();
-$db = $database->getConnection();
-
 $message = '';
 $error = '';
 
@@ -38,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Check if settings exist
             $check_query = "SELECT id FROM attendance_settings WHERE id = 1";
-            $check_stmt = $db->prepare($check_query);
+            $check_stmt = $conn->prepare($check_query);
             $check_stmt->execute();
             
             if ($check_stmt->rowCount() > 0) {
@@ -54,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     updated_at = NOW()
                     WHERE id = 1";
                 
-                $update_stmt = $db->prepare($update_query);
+                $update_stmt = $conn->prepare($update_query);
                 $update_stmt->execute([
                     $qr_expiry_hours, 
                     $max_check_distance, 
@@ -71,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                      late_checkin_minutes, require_checkout, auto_checkout_hours, created_at, updated_at) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
                 
-                $insert_stmt = $db->prepare($insert_query);
+                $insert_stmt = $conn->prepare($insert_query);
                 $insert_stmt->execute([
                     $qr_expiry_hours, 
                     $max_check_distance, 
@@ -99,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 updated_at = NOW()
                 WHERE id = 1";
             
-            $reset_stmt = $db->prepare($reset_query);
+            $reset_stmt = $conn->prepare($reset_query);
             $reset_stmt->execute();
             
             $message = 'Settings reset to default values!';
@@ -112,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Fetch current settings
 $settings_query = "SELECT * FROM attendance_settings WHERE id = 1";
-$settings_stmt = $db->prepare($settings_query);
+$settings_stmt = $conn->prepare($settings_query);
 $settings_stmt->execute();
 $settings = $settings_stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -135,7 +132,7 @@ $stats_query = "SELECT
     COUNT(CASE WHEN status = 'active' THEN 1 END) as active_events,
     COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_events
     FROM events WHERE deleted_at IS NULL";
-$stats_stmt = $db->prepare($stats_query);
+$stats_stmt = $conn->prepare($stats_query);
 $stats_stmt->execute();
 $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -144,7 +141,7 @@ $attendance_stats_query = "SELECT
     COUNT(CASE WHEN check_in_time IS NOT NULL AND check_out_time IS NOT NULL THEN 1 END) as completed_attendances,
     COUNT(CASE WHEN check_in_time IS NOT NULL AND check_out_time IS NULL THEN 1 END) as pending_checkouts
     FROM event_attendance";
-$attendance_stats_stmt = $db->prepare($attendance_stats_query);
+$attendance_stats_stmt = $conn->prepare($attendance_stats_query);
 $attendance_stats_stmt->execute();
 $attendance_stats = $attendance_stats_stmt->fetch(PDO::FETCH_ASSOC);
 

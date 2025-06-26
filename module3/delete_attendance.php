@@ -8,10 +8,10 @@ if ($role === 'student') {
 } elseif ($role === 'coordinator' || $role === 'petakom_coordinator') {
     include_once 'coordinator_dashboard.php';
 } elseif ($role === 'advisor' || $role === 'event_advisor') {
-    include_once 'advisor.php';
+    include_once 'advisor_dashboard.php';
 }
 
-if (!isset($_SESSION['advisorID'])) {
+if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
@@ -23,7 +23,7 @@ if (!isset($_GET['id'])) {
 }
 
 $attendanceID = $_GET['id'];
-$advisorID = $_SESSION['advisorID'];
+$advisorID = $_SESSION['user_id'];
 
 // Verify that this attendance belongs to the advisor
 $verify_query = "SELECT a.*, e.eventName 

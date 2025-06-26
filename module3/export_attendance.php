@@ -3,22 +3,12 @@ session_start();
 require_once 'db_connect.php';
 
 // Check if user is logged in and has appropriate permissions
-if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'event_advisor' && $_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'petakom_coordinator')) {
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['event_advisor', 'admin', 'petakom_coordinator', 'coordinator'])) {
     header('Location: login.php');
     exit();
 }
 
 $role = isset($_SESSION['role']) ? $_SESSION['role'] : '';
-if ($role === 'student') {
-    include_once 'student_dashboard.php';
-} elseif ($role === 'coordinator' || $role === 'petakom_coordinator') {
-    include_once 'coordinator_dashboard.php';
-} elseif ($role === 'advisor' || $role === 'event_advisor') {
-    include_once 'advisor_dashboard.php';
-}
-
-$database = new Database();
-$db = $database->getConnection();
 
 // Handle export request
 if (isset($_GET['action']) && $_GET['action'] === 'export') {
@@ -32,19 +22,19 @@ if (isset($_GET['action']) && $_GET['action'] === 'export') {
     try {
         switch ($export_type) {
             case 'attendance':
-                exportAttendanceData($db, $format, $event_id, $date_from, $date_to, $status_filter);
+                exportAttendanceData($conn, $format, $event_id, $date_from, $date_to, $status_filter);
                 break;
             case 'events':
-                exportEventsData($db, $format, $date_from, $date_to);
+                exportEventsData($conn, $format, $date_from, $date_to);
                 break;
             case 'summary':
-                exportSummaryData($db, $format, $date_from, $date_to);
+                exportSummaryData($conn, $format, $date_from, $date_to);
                 break;
             case 'analytics':
-                exportAnalyticsData($db, $format, $date_from, $date_to);
+                exportAnalyticsData($conn, $format, $date_from, $date_to);
                 break;
             default:
-                exportAttendanceData($db, $format, $event_id, $date_from, $date_to, $status_filter);
+                exportAttendanceData($conn, $format, $event_id, $date_from, $date_to, $status_filter);
         }
     } catch (Exception $e) {
         $_SESSION['error'] = 'Export failed: ' . $e->getMessage();
@@ -54,10 +44,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'export') {
 }
 
 // Get events for dropdown
+$events = [];
 $events_query = "SELECT id, title, event_date FROM events WHERE deleted_at IS NULL ORDER BY event_date DESC";
-$events_stmt = $db->prepare($events_query);
-$events_stmt->execute();
-$events = $events_stmt->fetchAll(PDO::FETCH_ASSOC);
+$events_result = $conn->query($events_query);
+if ($events_result) {
+    while ($row = $events_result->fetch_assoc()) {
+        $events[] = $row;
+    }
+}
 
 // Get export statistics
 $stats_query = "SELECT 
@@ -70,13 +64,26 @@ $stats_query = "SELECT
     FROM event_attendance ea 
     JOIN events e ON ea.event_id = e.id 
     WHERE e.deleted_at IS NULL";
-$stats_stmt = $db->prepare($stats_query);
-$stats_stmt->execute();
-$stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
+$stats_stmt = $conn->prepare($stats_query);
+if ($stats_stmt) {
+    $stats_stmt->execute();
+    $result = $stats_stmt->get_result();
+    $stats = $result->fetch_assoc();
+    $stats_stmt->close();
+} else {
+    $stats = [
+        'total_events_with_attendance' => 0,
+        'total_attendance_records' => 0,
+        'completed_attendances' => 0,
+        'pending_checkouts' => 0,
+        'earliest_attendance' => null,
+        'latest_attendance' => null
+    ];
+}
 
 include '../includes/header.php';
 
-function exportAttendanceData($db, $format, $event_id, $date_from, $date_to, $status_filter) {
+function exportAttendanceData($conn, $format, $event_id, $date_from, $date_to, $status_filter) {
     $query = "SELECT 
         e.title as event_title,
         e.event_date,
@@ -148,9 +155,9 @@ function exportAttendanceData($db, $format, $event_id, $date_from, $date_to, $st
     
     $query .= " ORDER BY e.event_date DESC, ea.check_in_time DESC";
     
-    $stmt = $db->prepare($query);
+    $stmt = $conn->prepare($query);
     $stmt->execute($params);
-    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $data = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     
     if ($format === 'excel') {
         exportToExcel($data, 'attendance_report');
@@ -159,7 +166,7 @@ function exportAttendanceData($db, $format, $event_id, $date_from, $date_to, $st
     }
 }
 
-function exportEventsData($db, $format, $date_from, $date_to) {
+function exportEventsData($conn, $format, $date_from, $date_to) {
     $query = "SELECT 
         e.title,
         e.description,
@@ -199,9 +206,9 @@ function exportEventsData($db, $format, $date_from, $date_to) {
     
     $query .= " GROUP BY e.id ORDER BY e.event_date DESC";
     
-    $stmt = $db->prepare($query);
+    $stmt = $conn->prepare($query);
     $stmt->execute($params);
-    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $data = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     
     if ($format === 'excel') {
         exportToExcel($data, 'events_report');
@@ -210,7 +217,7 @@ function exportEventsData($db, $format, $date_from, $date_to) {
     }
 }
 
-function exportSummaryData($db, $format, $date_from, $date_to) {
+function exportSummaryData($conn, $format, $date_from, $date_to) {
     $query = "SELECT 
         e.title as event_title,
         e.event_date,
@@ -243,9 +250,9 @@ function exportSummaryData($db, $format, $date_from, $date_to) {
     
     $query .= " GROUP BY e.id ORDER BY e.event_date DESC";
     
-    $stmt = $db->prepare($query);
+    $stmt = $conn->prepare($query);
     $stmt->execute($params);
-    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $data = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     
     if ($format === 'excel') {
         exportToExcel($data, 'summary_report');
@@ -254,7 +261,7 @@ function exportSummaryData($db, $format, $date_from, $date_to) {
     }
 }
 
-function exportAnalyticsData($db, $format, $date_from, $date_to) {
+function exportAnalyticsData($conn, $format, $date_from, $date_to) {
     // Get faculty-wise attendance data
     $query = "SELECT 
         u.faculty,
@@ -283,9 +290,9 @@ function exportAnalyticsData($db, $format, $date_from, $date_to) {
     
     $query .= " GROUP BY u.faculty ORDER BY total_attendance DESC";
     
-    $stmt = $db->prepare($query);
+    $stmt = $conn->prepare($query);
     $stmt->execute($params);
-    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $data = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     
     if ($format === 'excel') {
         exportToExcel($data, 'analytics_report');

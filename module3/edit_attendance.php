@@ -3,103 +3,77 @@ session_start();
 require_once 'db_connect.php';
 
 // Check if user is logged in and has appropriate permissions
-if (!isset($_SESSION['user_id']) || ($_SESSION['role'] != 'admin' && $_SESSION['role'] != 'teacher')) {
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] != 'admin' && $_SESSION['role'] != 'advisor' && $_SESSION['role'] != 'event_advisor')) {
     header("Location: login.php");
     exit();
 }
 
 $role = isset($_SESSION['role']) ? $_SESSION['role'] : '';
-if ($role === 'student') {
-    include_once 'student_dashboard.php';
-} elseif ($role === 'coordinator' || $role === 'petakom_coordinator') {
-    include_once 'coordinator_dashboard.php';
-} elseif ($role === 'advisor' || $role === 'event_advisor') {
-    include_once 'advisor_dashboard.php';
-}
-
 $message = '';
 $error = '';
 $attendance_record = null;
 
 // Get attendance record ID from URL
-$attendance_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$attendanceID = isset($_GET['id']) ? $_GET['id'] : '';
 
 // Handle form submission
 if ($_POST) {
-    $attendance_id = intval($_POST['attendance_id']);
-    $student_id = intval($_POST['student_id']);
-    $subject_id = intval($_POST['subject_id']);
+    $attendanceID = $_POST['attendanceID'];
+    $studentID = $_POST['studentID'];
+    $subject_id = $_POST['subject_id'];
     $attendance_date = $_POST['attendance_date'];
     $status = $_POST['status'];
     $remarks = trim($_POST['remarks']);
     
     // Validate input
-    if (empty($student_id) || empty($subject_id) || empty($attendance_date) || empty($status)) {
+    if (empty($studentID) || empty($subject_id) || empty($attendance_date) || empty($status)) {
         $error = "All required fields must be filled.";
     } else {
-        try {
-            // Update attendance record
-            $stmt = $pdo->prepare("
-                UPDATE attendance 
-                SET student_id = ?, subject_id = ?, attendance_date = ?, status = ?, remarks = ?, updated_at = NOW()
-                WHERE id = ?
-            ");
-            
-            if ($stmt->execute([$student_id, $subject_id, $attendance_date, $status, $remarks, $attendance_id])) {
-                $message = "Attendance record updated successfully!";
-                
-                // Log the action
-                $log_stmt = $pdo->prepare("
-                    INSERT INTO activity_logs (user_id, action, details, created_at) 
-                    VALUES (?, 'UPDATE_ATTENDANCE', ?, NOW())
-                ");
-                $log_details = "Updated attendance for student ID: $student_id, Subject ID: $subject_id, Date: $attendance_date";
-                $log_stmt->execute([$_SESSION['user_id'], $log_details]);
-            } else {
-                $error = "Failed to update attendance record.";
-            }
-        } catch (PDOException $e) {
-            $error = "Database error: " . $e->getMessage();
+        $stmt = $conn->prepare("
+            UPDATE attendance 
+            SET studentID=?, subject_id=?, attendance_date=?, status=?, remarks=?, updated_at=NOW() 
+            WHERE attendanceID=?
+        ");
+        $stmt->bind_param('iissss', $studentID, $subject_id, $attendance_date, $status, $remarks, $attendanceID);
+        
+        if ($stmt->execute()) {
+            $message = "Attendance record updated successfully!";
+        } else {
+            $error = "Failed to update attendance record.";
         }
+        
+        $stmt->close();
     }
 }
 
 // Fetch attendance record for editing
-if ($attendance_id > 0) {
-    try {
-        $stmt = $pdo->prepare("
-            SELECT a.*, s.first_name, s.last_name, s.student_id as student_number,
-                   sub.subject_name, sub.subject_code
-            FROM attendance a
-            JOIN students s ON a.student_id = s.id
-            JOIN subjects sub ON a.subject_id = sub.id
-            WHERE a.id = ?
-        ");
-        $stmt->execute([$attendance_id]);
-        $attendance_record = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$attendance_record) {
-            $error = "Attendance record not found.";
-        }
-    } catch (PDOException $e) {
-        $error = "Database error: " . $e->getMessage();
-    }
+if ($attendanceID) {
+    $stmt = $conn->prepare("
+        SELECT a.*, s.studentName, s.studentID, sub.subject_name, sub.subject_code 
+        FROM attendance a
+        JOIN student s ON a.studentID = s.studentID
+        JOIN subjects sub ON a.subject_id = sub.id
+        WHERE a.attendanceID = ?
+    ");
+    $stmt->bind_param('s', $attendanceID);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $attendance_record = $result->fetch_assoc();
+    $stmt->close();
 }
 
 // Fetch all students for dropdown
-try {
-    $students_stmt = $pdo->query("SELECT id, student_id, first_name, last_name FROM students ORDER BY first_name, last_name");
-    $students = $students_stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    $students = [];
+$students = [];
+$students_result = $conn->query("SELECT studentID, studentName FROM student ORDER BY studentName");
+while ($row = $students_result->fetch_assoc()) {
+    $students[] = $row;
 }
 
 // Fetch all subjects for dropdown
-try {
-    $subjects_stmt = $pdo->query("SELECT id, subject_code, subject_name FROM subjects ORDER BY subject_name");
-    $subjects = $subjects_stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    $subjects = [];
+$subjects = [];
+$subjects_result = $conn->query("SELECT id, subject_code, subject_name FROM subjects ORDER BY subject_name");
+while ($row = $subjects_result->fetch_assoc()) {
+    $subjects[] = $row;
 }
 ?>
 
@@ -301,8 +275,8 @@ try {
                             <div class="current-info">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <strong>Student:</strong> <?php echo htmlspecialchars($attendance_record['first_name'] . ' ' . $attendance_record['last_name']); ?><br>
-                                        <strong>Student ID:</strong> <?php echo htmlspecialchars($attendance_record['student_number']); ?>
+                                        <strong>Student:</strong> <?php echo htmlspecialchars($attendance_record['studentName']); ?><br>
+                                        <strong>Student ID:</strong> <?php echo htmlspecialchars($attendance_record['studentID']); ?>
                                     </div>
                                     <div class="col-md-6">
                                         <strong>Subject:</strong> <?php echo htmlspecialchars($attendance_record['subject_name']); ?><br>
@@ -331,19 +305,19 @@ try {
                         </div>
                         <div class="card-body">
                             <form method="POST" action="">
-                                <input type="hidden" name="attendance_id" value="<?php echo $attendance_record['id']; ?>">
+                                <input type="hidden" name="attendanceID" value="<?php echo $attendance_record['attendanceID']; ?>">
                                 
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="student_id" class="form-label">
+                                        <label for="studentID" class="form-label">
                                             <i class="fas fa-user me-1"></i>Student
                                         </label>
-                                        <select class="form-select select2" id="student_id" name="student_id" required>
+                                        <select class="form-select select2" id="studentID" name="studentID" required>
                                             <option value="">Select Student</option>
                                             <?php foreach ($students as $student): ?>
-                                                <option value="<?php echo $student['id']; ?>" 
-                                                    <?php echo ($student['id'] == $attendance_record['student_id']) ? 'selected' : ''; ?>>
-                                                    <?php echo htmlspecialchars($student['student_id'] . ' - ' . $student['first_name'] . ' ' . $student['last_name']); ?>
+                                                <option value="<?php echo $student['studentID']; ?>" 
+                                                    <?php echo ($student['studentID'] == $attendance_record['studentID']) ? 'selected' : ''; ?>>
+                                                    <?php echo htmlspecialchars($student['studentID'] . ' - ' . $student['studentName']); ?>
                                                 </option>
                                             <?php endforeach; ?>
                                         </select>
@@ -443,7 +417,7 @@ try {
                 let errorMessage = '';
                 
                 // Check required fields
-                const requiredFields = ['student_id', 'subject_id', 'attendance_date', 'status'];
+                const requiredFields = ['studentID', 'subject_id', 'attendance_date', 'status'];
                 requiredFields.forEach(function(field) {
                     if (!$('#' + field).val()) {
                         isValid = false;

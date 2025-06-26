@@ -17,12 +17,12 @@ if ($role === 'student') {
     include_once 'advisor_dashboard.php';
 }
 
-if (!isset($_SESSION['advisorID'])) {
+if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
 
-$advisorID = $_SESSION['advisorID'];
+$advisorID = $_SESSION['user_id'];
 
 // Get filter parameters
 $filter_event = isset($_GET['event']) ? $_GET['event'] : '';
@@ -66,84 +66,11 @@ $events_query = "SELECT eventID, eventName FROM event WHERE advisorID = '$adviso
 $events_result = $conn->query($events_query);
 ?>
 
-<div class="main-content">
-    <div class="content">
+<div class="main-content" style="display: flex; gap: 32px; align-items: flex-start;">
+    <div class="content" style="flex: 2; min-width: 0;">
         <div class="card">
             <h2>Attendance Reports</h2>
-            
-            <!-- Filter Form -->
-            <form method="GET" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Event:</label>
-                        <select name="event" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                            <option value="">All Events</option>
-                            <?php while ($event = $events_result->fetch_assoc()): ?>
-                                <option value="<?php echo $event['eventID']; ?>" <?php echo $filter_event == $event['eventID'] ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($event['eventName']); ?>
-                                </option>
-                            <?php endwhile; ?>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Status:</label>
-                        <select name="status" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                            <option value="">All Status</option>
-                            <option value="open" <?php echo $filter_status == 'open' ? 'selected' : ''; ?>>Open</option>
-                            <option value="closed" <?php echo $filter_status == 'closed' ? 'selected' : ''; ?>>Closed</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">From Date:</label>
-                        <input type="date" name="date_from" value="<?php echo $filter_date_from; ?>" 
-                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                    </div>
-                    
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">To Date:</label>
-                        <input type="date" name="date_to" value="<?php echo $filter_date_to; ?>" 
-                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                    </div>
-                    
-                    <div>
-                        <button type="submit" style="background: #007bff; color: white; padding: 8px 20px; border: none; border-radius: 4px; cursor: pointer;">
-                            Filter
-                        </button>
-                        <a href="attendance_report.php" style="background: #6c757d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; margin-left: 10px;">
-                            Clear
-                        </a>
-                    </div>
-                </div>
-            </form>
-            
-            <!-- Summary Statistics -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
-                <div style="background: #28a745; color: white; padding: 15px; border-radius: 8px; text-align: center;">
-                    <h3 style="margin: 0;"><?php echo $attendance_result->num_rows; ?></h3>
-                    <p style="margin: 5px 0 0 0;">Total Sessions</p>
-                </div>
-                <div style="background: #17a2b8; color: white; padding: 15px; border-radius: 8px; text-align: center;">
-                    <?php
-                    $total_present = 0;
-                    $total_attendees = 0;
-                    $attendance_result->data_seek(0);
-                    while ($row = $attendance_result->fetch_assoc()) {
-                        $total_present += $row['present_count'];
-                        $total_attendees += $row['total_attendees'];
-                    }
-                    $attendance_result->data_seek(0);
-                    ?>
-                    <h3 style="margin: 0;"><?php echo $total_present; ?></h3>
-                    <p style="margin: 5px 0 0 0;">Total Present</p>
-                </div>
-                <div style="background: #ffc107; color: white; padding: 15px; border-radius: 8px; text-align: center;">
-                    <h3 style="margin: 0;"><?php echo $total_attendees > 0 ? round(($total_present / $total_attendees) * 100, 1) : 0; ?>%</h3>
-                    <p style="margin: 5px 0 0 0;">Attendance Rate</p>
-                </div>
-            </div>
-            
+            <!-- Filter Form and Summary will be moved to the right panel -->
             <!-- Attendance Table -->
             <?php if ($attendance_result->num_rows > 0): ?>
                 <div style="overflow-x: auto;">
@@ -207,6 +134,78 @@ $events_result = $conn->query($events_query);
             <?php endif; ?>
         </div>
     </div>
+    <div class="report-panel" style="flex: 1; min-width: 320px; max-width: 400px;">
+        <div class="card" style="position:sticky;top:32px;">
+            <h2 style="font-size:1.5rem; margin-bottom:1rem;">Attendance Reports</h2>
+            <!-- Filter Form -->
+            <form method="GET" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 15px; align-items: end;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Event:</label>
+                        <select name="event" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">All Events</option>
+                            <?php $events_result->data_seek(0); while ($event = $events_result->fetch_assoc()): ?>
+                                <option value="<?php echo $event['eventID']; ?>" <?php echo $filter_event == $event['eventID'] ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($event['eventName']); ?>
+                                </option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Status:</label>
+                        <select name="status" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">All Status</option>
+                            <option value="open" <?php echo $filter_status == 'open' ? 'selected' : ''; ?>>Open</option>
+                            <option value="closed" <?php echo $filter_status == 'closed' ? 'selected' : ''; ?>>Closed</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">From Date:</label>
+                        <input type="date" name="date_from" value="<?php echo $filter_date_from; ?>" 
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">To Date:</label>
+                        <input type="date" name="date_to" value="<?php echo $filter_date_to; ?>" 
+                               style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div>
+                        <button type="submit" style="background: #007bff; color: white; padding: 8px 20px; border: none; border-radius: 4px; cursor: pointer;">
+                            Filter
+                        </button>
+                        <a href="attendance_report.php" style="background: #6c757d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; margin-left: 10px;">
+                            Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
+            <!-- Summary Statistics -->
+            <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px;">
+                <div style="background: #28a745; color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                    <h3 style="margin: 0;"><?php echo $attendance_result->num_rows; ?></h3>
+                    <p style="margin: 5px 0 0 0;">Total Sessions</p>
+                </div>
+                <div style="background: #17a2b8; color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                    <?php
+                    $total_present = 0;
+                    $total_attendees = 0;
+                    $attendance_result->data_seek(0);
+                    while ($row = $attendance_result->fetch_assoc()) {
+                        $total_present += $row['present_count'];
+                        $total_attendees += $row['total_attendees'];
+                    }
+                    $attendance_result->data_seek(0);
+                    ?>
+                    <h3 style="margin: 0;"><?php echo $total_present; ?></h3>
+                    <p style="margin: 5px 0 0 0;">Total Present</p>
+                </div>
+                <div style="background: #ffc107; color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                    <h3 style="margin: 0;"><?php echo $total_attendees > 0 ? round(($total_present / $total_attendees) * 100, 1) : 0; ?>%</h3>
+                    <p style="margin: 5px 0 0 0;">Attendance Rate</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -221,6 +220,9 @@ $events_result = $conn->query($events_query);
 .main-content {
     margin-left: 250px;
     padding: 20px;
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
 }
 
 .content {
@@ -228,22 +230,20 @@ $events_result = $conn->query($events_query);
     margin: 0 auto;
 }
 
-@media (max-width: 768px) {
+.report-panel {
+    min-width: 320px;
+    max-width: 400px;
+}
+
+@media (max-width: 1000px) {
     .main-content {
-        margin-left: 0;
-        padding: 10px;
+        flex-direction: column;
+        gap: 0;
     }
-    
-    .card {
-        padding: 15px;
-    }
-    
-    table {
-        font-size: 14px;
-    }
-    
-    th, td {
-        padding: 8px !important;
+    .report-panel {
+        max-width: 100%;
+        min-width: 0;
+        margin-top: 24px;
     }
 }
 </style>

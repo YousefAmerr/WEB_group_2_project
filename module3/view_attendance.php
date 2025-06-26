@@ -2,37 +2,47 @@
 session_start();
 include 'db_connect.php';
 
-// Check if user is logged in and is a student
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'student' || !isset($_SESSION['username'])) {
+// Check if user is logged in and is a student or coordinator
+if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['student', 'coordinator']) || !isset($_SESSION['username'])) {
     header('Location: login.php');
     exit();
 }
 
 $username = $_SESSION['username'];
+$role = $_SESSION['role'];
 
-// Get student ID
-$student_query = "SELECT studentID, studentName FROM student WHERE StuUsername = ?";
-$stmt = $conn->prepare($student_query);
-$stmt->bind_param('s', $username);
-$stmt->execute();
-$student_result = $stmt->get_result();
-$student = $student_result->fetch_assoc();
-$studentID = $student['studentID'];
-$studentName = $student['studentName'];
-$stmt->close();
+if ($role === 'student') {
+    // Get student ID
+    $student_query = "SELECT studentID, studentName FROM student WHERE StuUsername = ?";
+    $stmt = $conn->prepare($student_query);
+    $stmt->bind_param('s', $username);
+    $stmt->execute();
+    $student_result = $stmt->get_result();
+    $student = $student_result->fetch_assoc();
+    $studentID = $student['studentID'] ?? '';
+    $studentName = $student['studentName'] ?? '';
+    $stmt->close();
 
-// Get attendance records for this student
-$attendance_query = "SELECT ac.*, e.eventName, e.eventLocation, a.attendanceDate
-    FROM attendancecslot ac
-    JOIN attendance a ON ac.attendanceID = a.attendanceID
-    JOIN event e ON a.eventID = e.eventID
-    WHERE ac.studentID = ?
-    ORDER BY a.attendanceDate DESC, ac.attendance_date DESC";
-$stmt = $conn->prepare($attendance_query);
-$stmt->bind_param('s', $studentID);
-$stmt->execute();
-$attendance_result = $stmt->get_result();
-
+    // Get attendance records for this student
+    $attendance_query = "SELECT ac.*, e.eventName, e.eventLocation, a.attendanceDate
+        FROM attendancecslot ac
+        JOIN attendance a ON ac.attendanceID = a.attendanceID
+        JOIN event e ON a.eventID = e.eventID
+        WHERE ac.studentID = ?
+        ORDER BY a.attendanceDate DESC, ac.attendance_date DESC";
+    $stmt = $conn->prepare($attendance_query);
+    $stmt->bind_param('s', $studentID);
+    $stmt->execute();
+    $attendance_result = $stmt->get_result();
+} elseif ($role === 'coordinator') {
+    // Get all attendance records for coordinators
+    $attendance_query = "SELECT a.*, s.studentName, s.studentID, e.eventName, e.eventLevel, a.attendanceDate, a.attendance_status 
+        FROM attendance a 
+        JOIN student s ON a.studentID = s.studentID 
+        JOIN event e ON a.eventID = e.eventID 
+        ORDER BY a.attendanceDate DESC LIMIT 100";
+    $attendance_result = $conn->query($attendance_query);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -55,42 +65,82 @@ $attendance_result = $stmt->get_result();
 </head>
 <body>
 <div class="container">
-    <h2>My Attendance Records</h2>
-    <p><strong>Name:</strong> <?php echo htmlspecialchars($studentName); ?></p>
-    <?php if ($attendance_result->num_rows > 0): ?>
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Event Name</th>
-                    <th>Location</th>
-                    <th>Attendance Date</th>
-                    <th>Check-in Date</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-            <?php $i = 1; while ($row = $attendance_result->fetch_assoc()): ?>
-                <tr>
-                    <td><?php echo $i++; ?></td>
-                    <td><?php echo htmlspecialchars($row['eventName']); ?></td>
-                    <td><?php echo htmlspecialchars($row['eventLocation']); ?></td>
-                    <td><?php echo htmlspecialchars($row['attendanceDate']); ?></td>
-                    <td><?php echo htmlspecialchars($row['attendance_date']); ?></td>
-                    <td>
-                        <span class="<?php echo $row['status'] == 'Present' ? 'status-present' : 'status-absent'; ?>">
-                            <?php echo htmlspecialchars($row['status']); ?>
-                        </span>
-                    </td>
-                </tr>
-            <?php endwhile; ?>
-            </tbody>
-        </table>
-    <?php else: ?>
-        <p style="text-align:center; color:#888; margin:40px 0;">No attendance records found.</p>
+    <?php if ($role === 'student'): ?>
+        <h2>My Attendance Records</h2>
+        <p><strong>Name:</strong> <?php echo htmlspecialchars($studentName); ?></p>
+        <?php if ($attendance_result->num_rows > 0): ?>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Event Name</th>
+                        <th>Location</th>
+                        <th>Attendance Date</th>
+                        <th>Check-in Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php $i = 1; while ($row = $attendance_result->fetch_assoc()): ?>
+                    <tr>
+                        <td><?php echo $i++; ?></td>
+                        <td><?php echo htmlspecialchars($row['eventName']); ?></td>
+                        <td><?php echo htmlspecialchars($row['eventLocation']); ?></td>
+                        <td><?php echo htmlspecialchars($row['attendanceDate']); ?></td>
+                        <td><?php echo htmlspecialchars($row['attendance_date']); ?></td>
+                        <td>
+                            <span class="<?php echo $row['status'] == 'Present' ? 'status-present' : 'status-absent'; ?>">
+                                <?php echo htmlspecialchars($row['status']); ?>
+                            </span>
+                        </td>
+                    </tr>
+                <?php endwhile; ?>
+                </tbody>
+            </table>
+        <?php else: ?>
+            <p style="text-align:center; color:#888; margin:40px 0;">No attendance records found.</p>
+        <?php endif; ?>
+        <a href="student_dashboard.php" class="back-btn">&larr; Back to Dashboard</a>
+    <?php elseif ($role === 'coordinator'): ?>
+        <h2>All Attendance Records</h2>
+        <?php if ($attendance_result && $attendance_result->num_rows > 0): ?>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th>Student</th>
+                        <th>Student ID</th>
+                        <th>Event</th>
+                        <th>Level</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php $i = 1; while ($row = $attendance_result->fetch_assoc()): ?>
+                    <tr>
+                        <td><?php echo $i++; ?></td>
+                        <td><?php echo htmlspecialchars($row['attendanceDate']); ?></td>
+                        <td><?php echo htmlspecialchars($row['studentName']); ?></td>
+                        <td><?php echo htmlspecialchars($row['studentID']); ?></td>
+                        <td><?php echo htmlspecialchars($row['eventName']); ?></td>
+                        <td><?php echo htmlspecialchars($row['eventLevel']); ?></td>
+                        <td><?php echo htmlspecialchars($row['attendance_status']); ?></td>
+                    </tr>
+                <?php endwhile; ?>
+                </tbody>
+            </table>
+        <?php else: ?>
+            <p style="text-align:center; color:#888; margin:40px 0;">No attendance records found.</p>
+        <?php endif; ?>
+        <a href="coordinator_dashboard.php" class="back-btn">&larr; Back to Dashboard</a>
     <?php endif; ?>
-    <a href="student_dashboard.php" class="back-btn">&larr; Back to Dashboard</a>
 </div>
 </body>
 </html>
-<?php $stmt->close(); $conn->close(); ?>
+<?php 
+if ($role === 'student' && isset($stmt) && $stmt) { 
+    $stmt->close(); 
+}
+$conn->close(); 
+?>

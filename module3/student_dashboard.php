@@ -3,63 +3,70 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 require_once 'db_connect.php';
 $role = isset($_SESSION['role']) ? $_SESSION['role'] : '';
 $username = isset($_SESSION['username']) ? $_SESSION['username'] : '';
+$student_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : '';
 if ($role !== 'student') {
     header('Location: login.php');
     exit();
 }
+// Fetch attendance records for the logged-in student
+$attendance_records = [];
+if ($student_id) {
+    $sql = "SELECT a.*, e.eventName, e.eventLevel, a.attendanceDate, a.attendance_status FROM attendance a JOIN event e ON a.eventID = e.eventID WHERE a.studentID = ? ORDER BY a.attendanceDate DESC LIMIT 20";
+    $stmt = $conn->prepare($sql);
+    if ($stmt) {
+        $stmt->bind_param('s', $student_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $attendance_records = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+        $stmt->close();
+    }
+}
+$studentName = '';
+if ($student_id) {
+    $stmt = $conn->prepare("SELECT studentName FROM student WHERE studentID = ?");
+    $stmt->bind_param('s', $student_id);
+    $stmt->execute();
+    $stmt->bind_result($studentName);
+    $stmt->fetch();
+    $stmt->close();
+}
+include 'sidebar/Student_SideBar.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Attendance Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="css/utilities.css">
-    <link rel="stylesheet" href="css/attendance.css">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-user-graduate me-2"></i>Student Dashboard
-            </a>
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <span class="nav-link"><i class="fas fa-user me-1"></i><?php echo htmlspecialchars($username); ?></span>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="logout.php"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
-                </li>
-            </ul>
+<div class="main-content">
+  <div class="content">
+    <div class="card">
+      <h2>Welcome, <?php echo htmlspecialchars($studentName); ?>!</h2>
+      <h4 class="mb-3"><i class="material-icons" style="color:#7367f0;vertical-align:middle;">event</i> My Attendance</h4>
+      <?php if ($attendance_records): ?>
+        <div class="table-responsive mb-4">
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Event</th>
+                <th>Level</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($attendance_records as $record): ?>
+                <tr>
+                  <td><?php echo htmlspecialchars($record['attendanceDate']); ?></td>
+                  <td><?php echo htmlspecialchars($record['eventName']); ?></td>
+                  <td><?php echo htmlspecialchars($record['eventLevel']); ?>
+                    <?php if (strtolower($record['eventLevel']) === 'joint'): ?>
+                      <span style="background:#ff9800;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;margin-left:6px;">Joint Event</span>
+                    <?php endif; ?>
+                  </td>
+                  <td><?php echo htmlspecialchars($record['attendance_status']); ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
         </div>
-    </nav>
-    <div class="container main-content mt-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card shadow mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h2 class="mb-0">Welcome, <?php echo htmlspecialchars($username); ?>!</h2>
-                    </div>
-                    <div class="card-body">
-                        <h4 class="mb-3"><i class="fas fa-calendar-check text-primary me-2"></i>My Attendance</h4>
-                        <div class="list-group mb-4">
-                            <a href="attendance.php" class="list-group-item list-group-item-action">
-                                <i class="fas fa-list me-2"></i>View My Attendance
-                            </a>
-                        </div>
-                        <h4 class="mb-3"><i class="fas fa-link text-primary me-2"></i>Quick Links</h4>
-                        <div class="list-group">
-                            <a href="attendance.php" class="list-group-item list-group-item-action">
-                                <i class="fas fa-file-alt me-2"></i>Attendance Records
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      <?php else: ?>
+        <div class="alert alert-info">No attendance records found.</div>
+      <?php endif; ?>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+  </div>
+</div>

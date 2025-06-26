@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'b_connect.php';
+require_once 'db_connect.php';
 
 // Robust session/role check
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || 
@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) ||
 }
 
 $role = $_SESSION['role'];
-$advisorID = $_SESSION['advisorID'];
+$advisorID = $_SESSION['user_id']; // Use the correct session variable
 
 // Get events for this advisor
 $events_query = "SELECT * FROM event WHERE advisorID = '$advisorID'";
