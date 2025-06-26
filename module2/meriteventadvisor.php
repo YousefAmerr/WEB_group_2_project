@@ -68,7 +68,7 @@ $pendingResult = $conn->query($pendingSql);
     <meta charset="UTF-8">
     <meta name="Basyirah" content="Web Engineering Project - Student Dashboard">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../module2/meriteventadvisor.css">
+    <link rel="stylesheet" href="../module2/meriteventadvisor2.css">
     <title>MyPetakom - Event Advisor</title>
     <style>
         /* Optional: Add colors to status */

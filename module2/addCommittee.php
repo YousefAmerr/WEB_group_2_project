@@ -13,11 +13,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $studentID = $_POST['studentID'] ?? ''; // Changed studID to studentID
     $coordinatorID = $_POST['coordinatorID'] ?? ''; // Changed staffID to coordinatorID
     $eventID = $_POST['eventID'] ?? '';
+        $role_type = $_POST['role_type'] ?? ''; // Add this line
+
 
     if ($studentID && $coordinatorID && $eventID) {
         // Insert into meritapplication table instead of commitee
-        $stmt = $conn->prepare("INSERT INTO meritapplication (studentID, coordinatorID, eventID, status, submissionDate) VALUES (?, ?, ?, 'Pending', CURDATE())");
-        $stmt->bind_param("sss", $studentID, $coordinatorID, $eventID);
+        $stmt = $conn->prepare("INSERT INTO meritapplication (studentID, coordinatorID, eventID, role_type, status, submissionDate) VALUES (?, ?, ?, ?, 'Pending', CURDATE())");
+$stmt->bind_param("ssss", $studentID, $coordinatorID, $eventID, $role_type);
 
         if ($stmt->execute()) {
             $message = "Committee member added successfully.";
@@ -40,7 +42,7 @@ $conn->close();
     <meta name="Basyirah" content="Web Engineering Project - Event Advisor Dashboard">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Add Committee Member - MyPetakom</title>
-    <link rel="stylesheet" href="../module2/addCommittee.css">
+    <link rel="stylesheet" href="../module2/addCommittee2.css">
 </head>
 <body>
 
@@ -89,6 +91,13 @@ $conn->close();
                             </option>
                         <?php endwhile; ?>
                     </select><br /><br />
+
+                <label for="role_type">Select Role Type:</label>
+<select name="role_type" id="role_type" required>
+    <option value="">-- Select Role --</option>
+    <option value="committee">Committee</option>
+    <option value="main-committee">Main Committee</option>
+</select><br><br>
 
                     <a href="committee.php">
                     <button type="submit">Add</button>

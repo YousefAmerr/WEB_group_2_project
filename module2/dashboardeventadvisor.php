@@ -33,7 +33,7 @@ while ($row = $levelResult->fetch_assoc()) {
     <meta charset="UTF-8">
     <meta name="Jaclina" content="Web Engineering Project- Student Dashboard">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../module2/dashboardeventadvisor.css">
+    <link rel="stylesheet" href="../module2/dashboardeventadvisor3.css">
     <title>MyPetakom - Event Advisor Dashboard</title>
     <!-- Add Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

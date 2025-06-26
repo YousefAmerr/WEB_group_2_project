@@ -45,7 +45,7 @@ $advisors = $conn->query("SELECT advisorID, advisorName FROM advisor");
     <meta name="Basyirah" content="Web Engineering Project- Student Dashboard">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Update Event - MyPetakom</title>
-    <link rel="stylesheet" href="../module2/updateevent.css">
+    <link rel="stylesheet" href="../module2/updateevent2.css">
 </head>
 <body>
 
