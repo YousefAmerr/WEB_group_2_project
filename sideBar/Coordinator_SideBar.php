@@ -224,7 +224,7 @@ h2 {
     <h1 class="h11" style="text-align:center; padding:20px;">MyPetakom</h1>
   </div>
   <div class="sidebar-nav">
-    <div class="nav-item"><i class="material-icons">dashboard</i><a href="../module4/dashboard.php">Dashboard</a></div>
+    <div class="nav-item"><i class="material-icons">dashboard</i><a href="../module3/attendance_dashboard.php">Dashboard</a></div>
     <div class="nav-divider">COMPONENTS</div>
     <!-- option 1 -->
      <div class="nav-item"><i class="material-icons">notifications_active</i><a href="../module2/meritadmin.php">Merit Approval</a></div>

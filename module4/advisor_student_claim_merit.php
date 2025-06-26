@@ -335,6 +335,27 @@ $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
         </div>
     </div>
 
+    <style>
+        .document-preview {
+            max-width: 100%;
+            max-height: 70vh;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #documentError {
+            padding: 40px 20px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px dashed #ddd;
+        }
+
+        #documentContainer {
+            margin-top: 20px;
+        }
+    </style>
+
     <script>
         function confirmAction(action) {
             const actionText = action === 'approve' ? 'approve' : 'reject';
@@ -355,19 +376,51 @@ $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
             documentImage.onload = function() {
                 documentImage.style.display = 'block';
             };
-
             documentImage.onerror = function() {
                 documentError.style.display = 'block';
+                documentError.innerHTML = '<i class="material-icons">error_outline</i><p>Unable to load document</p>';
             };
 
-            // Fix the path - use forward slash and correct relative path
-            documentImage.src = 'uploads/meritclaim/' + filename;
+            // Determine file extension to handle different file types
+            const fileExt = filename.split('.').pop().toLowerCase();
+
+            if (fileExt === 'pdf') {
+                // For PDFs, use an iframe instead of an image
+                documentImage.style.display = 'none';
+
+                // Check if iframe already exists, otherwise create it
+                let pdfFrame = document.getElementById('pdfFrame');
+                if (!pdfFrame) {
+                    pdfFrame = document.createElement('iframe');
+                    pdfFrame.id = 'pdfFrame';
+                    pdfFrame.className = 'document-preview';
+                    pdfFrame.style.width = '100%';
+                    pdfFrame.style.height = '500px';
+                    document.getElementById('documentContainer').appendChild(pdfFrame);
+                } else {
+                    pdfFrame.style.display = 'block';
+                }
+                pdfFrame.src = 'uploads/meritclaim/' + filename;
+            } else {
+                // For images, use the image element
+                let pdfFrame = document.getElementById('pdfFrame');
+                if (pdfFrame) pdfFrame.style.display = 'none';
+
+                documentImage.src = 'uploads/meritclaim/' + filename;
+            }
 
             modal.style.display = 'block';
         }
 
         function closeModal() {
             document.getElementById('documentModal').style.display = 'none';
+
+            // Reset the iframe source if it exists to stop PDF loading/playing
+            const pdfFrame = document.getElementById('pdfFrame');
+            if (pdfFrame) {
+                pdfFrame.src = '';
+                pdfFrame.style.display = 'none';
+            }
         }
 
         // Close modal when clicking outside of it
